@@ -137,19 +137,24 @@ namespace Microsoft.Scripting.Hosting.Shell {
         protected virtual IConsole CreateConsole(ScriptEngine engine, CommandLine commandLine, ConsoleOptions options) {
             ContractUtils.RequiresNotNull(options, "options");
 
+#if !MAC
             if (options.TabCompletion) {
                 return CreateSuperConsole(commandLine, options.ColorfulConsole);
-            } else {
+            } else 
+#endif
+{
                 return new BasicConsole(options.ColorfulConsole);
             }
         }
 
+#if !MAC
         // The advanced console functions are in a special non-inlined function so that 
         // dependencies are pulled in only if necessary.
         [MethodImplAttribute(MethodImplOptions.NoInlining)]
         private static IConsole CreateSuperConsole(CommandLine commandLine, bool isColorful) {
             return new SuperConsole(commandLine, isColorful);
         }
+#endif
 
         #endregion
 

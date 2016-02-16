@@ -22,6 +22,7 @@ using System.Threading;
 using Microsoft.Scripting.Hosting.Providers;
 using Microsoft.Scripting.Runtime;
 using Microsoft.Scripting.Utils;
+using Microsoft.Scripting;
 
 namespace Microsoft.Scripting.Hosting.Shell {
     /// <summary>
@@ -221,7 +222,7 @@ namespace Microsoft.Scripting.Hosting.Shell {
                 _scope = _engine.CreateScope();
             }
 
-#if !SILVERLIGHT // Remote console
+#if !SILVERLIGHT && !MAC // Remote console
             string remoteRuntimeChannel = _options.RemoteRuntimeChannel;
             if (remoteRuntimeChannel != null) {
                 // Publish the ScriptScope so that the host can use it

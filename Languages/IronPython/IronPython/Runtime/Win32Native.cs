@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
 namespace IronPython.Runtime {
-#if FEATURE_NATIVE
+#if FEATURE_NATIVE && !MAC
     class NativeMethods {
         [Serializable]
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]

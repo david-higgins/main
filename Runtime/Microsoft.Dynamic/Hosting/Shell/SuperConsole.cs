@@ -12,7 +12,7 @@
  *
  *
  * ***************************************************************************/
-#if FEATURE_FULL_CONSOLE
+#if FEATURE_FULL_CONSOLE && !MAC
 
 using System;
 using System.Collections;

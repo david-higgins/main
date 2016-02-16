@@ -49,7 +49,11 @@ internal sealed class PythonConsoleHost : ConsoleHost {
 
     protected override IConsole CreateConsole(ScriptEngine engine, CommandLine commandLine, ConsoleOptions options) {
         PythonConsoleOptions pyoptions = (PythonConsoleOptions)options;
+		#if MAC
+		return new BasicConsole(options.ColorfulConsole);
+		#else
         return pyoptions.BasicConsole ? new BasicConsole(options.ColorfulConsole) : new SuperConsole(commandLine, options.ColorfulConsole);
+		#endif
     }
 
     protected override void ParseHostOptions(string/*!*/[]/*!*/ args) {

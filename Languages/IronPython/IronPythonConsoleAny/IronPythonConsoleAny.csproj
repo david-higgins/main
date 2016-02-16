@@ -2,7 +2,6 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <Import Project="$(ProjectDir)..\..\..\Solutions\Common.proj" />
   <PropertyGroup>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{F1D861C5-D9D5-4CDA-968B-8275F5D9F6D2}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -11,16 +10,33 @@
     <ApplicationIcon>..\IronPythonConsole\ipy.ico</ApplicationIcon>
     <CodeAnalysisRuleSet>IronPythonConsoleAny.ruleset</CodeAnalysisRuleSet>
     <AppConfig>..\App.$(ConfigurationFlavor).config</AppConfig>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'FxCop|AnyCPU' ">
+    <OutputPath>bin\FxCop</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v2Debug|AnyCPU' ">
+    <OutputPath>bin\v2Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v2Release|AnyCPU' ">
+    <OutputPath>bin\v2Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Runtime\Microsoft.Scripting.Core\Microsoft.Scripting.Core.csproj" Condition="'$(FeatureCoreDlr)' != 'true'">

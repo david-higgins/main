@@ -18,6 +18,7 @@ using System.Text;
 using System.Security;
 using System.Collections;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace Microsoft.Scripting.Metadata {
     internal enum EnumerationIndirection {

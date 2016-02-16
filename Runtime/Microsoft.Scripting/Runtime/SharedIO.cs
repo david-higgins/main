@@ -124,7 +124,7 @@ namespace Microsoft.Scripting.Runtime {
                     if (_inputStream == null) {
 #if FEATURE_FULL_CONSOLE
                         _inputStream = ConsoleInputStream.Instance;
-                        _inputEncoding = Console.InputEncoding;
+						_inputEncoding = Encoding.UTF8;
                         _inputReader = Console.In;
 #elif FEATURE_BASIC_CONSOLE
                         _inputEncoding = StringUtils.DefaultEncoding;

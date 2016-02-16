@@ -2,27 +2,76 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <Import Project="$(ProjectDir)..\..\Solutions\Common.proj" />
   <PropertyGroup>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{ACDD9B9E-8FE6-439C-9521-1CCBA47F6143}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Microsoft.Scripting.Metadata</RootNamespace>
-    <AssemblyName>Microsoft.Scripting.Metadata</AssemblyName>
-    <BaseAddress>859832320</BaseAddress>
-    <CodeAnalysisRuleSet>$(AssemblyName).ruleset</CodeAnalysisRuleSet>
-    <DocumentationFile>$(SolutionDir)..\bin\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>$(DefineConstants);CCI</DefineConstants>
-  </PropertyGroup>
+    <ProjectTypeGuids>{A3F8F2AB-B479-4A4A-A458-A89E7DC349F1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>s
+    <OutputType>Library</OutputType><AppDesignerFolder>Properties</AppDesignerFolder><RootNamespace>Microsoft.Scripting.Metadata</RootNamespace><AssemblyName>Microsoft.Scripting.Metadata</AssemblyName><BaseAddress>859832320</BaseAddress><CodeAnalysisRuleSet>$(AssemblyName).ruleset</CodeAnalysisRuleSet><DocumentationFile>$(SolutionDir)..\bin\$(Configuration)\$(AssemblyName).xml</DocumentationFile><AllowUnsafeBlocks>true</AllowUnsafeBlocks><DefineConstants>$(DefineConstants);CCI</DefineConstants><Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration><Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform><TargetFrameworkIdentifier>Xamarin.Mac</TargetFrameworkIdentifier><TargetFrameworkVersion>v2.0</TargetFrameworkVersion></PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'FxCop|AnyCPU' ">
+    <OutputPath>bin\FxCop</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v2Debug|AnyCPU' ">
+    <OutputPath>bin\v2Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v2Release|AnyCPU' ">
+    <OutputPath>bin\v2Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v45Release|AnyCPU' ">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\v45Release</OutputPath>
+    <DefineConstants>
+    </DefineConstants>
+    <WarningLevel>4</WarningLevel>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="MemoryMapping.V4.cs" />

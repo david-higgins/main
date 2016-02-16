@@ -2,8 +2,8 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <Import Project="$(ProjectDir)..\..\..\Solutions\Common.proj" />
   <PropertyGroup>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{155CE436-1669-4A48-8095-410F2430237F}</ProjectGuid>
+    <ProjectTypeGuids>{A3F8F2AB-B479-4A4A-A458-A89E7DC349F1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>IronPython.Modules</RootNamespace>
@@ -11,36 +11,186 @@
     <BaseAddress>885063680</BaseAddress>
     <CodeAnalysisRuleSet>$(AssemblyName).ruleset</CodeAnalysisRuleSet>
     <DocumentationFile>$(SolutionDir)..\bin\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <TargetFrameworkIdentifier>Xamarin.Mac</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'FxCop|AnyCPU' ">
+    <OutputPath>bin\FxCop</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Win8Debug|AnyCPU' ">
+    <OutputPath>bin\Win8Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Win8Release|AnyCPU' ">
+    <OutputPath>bin\Win8Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v2Debug|AnyCPU' ">
+    <OutputPath>bin\v2Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v2Release|AnyCPU' ">
+    <OutputPath>bin\v2Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'WP7Debug|AnyCPU' ">
+    <OutputPath>bin\WP7Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'WP7Release|AnyCPU' ">
+    <OutputPath>bin\WP7Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Silverlight4Debug|AnyCPU' ">
+    <OutputPath>bin\Silverlight4Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Silverlight4Release|AnyCPU' ">
+    <OutputPath>bin\Silverlight4Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Silverlight5Debug|AnyCPU' ">
+    <OutputPath>bin\Silverlight5Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Silverlight5Release|AnyCPU' ">
+    <OutputPath>bin\Silverlight5Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AndroidDebug|AnyCPU' ">
+    <OutputPath>bin\AndroidDebug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AndroidRelease|AnyCPU' ">
+    <OutputPath>bin\AndroidRelease</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v45Release|AnyCPU' ">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\v45Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="array.cs" />
@@ -157,7 +307,7 @@
     <None Include="IronPython.Modules.ruleset" />
   </ItemGroup>
   <ItemGroup>
-    <PolicyFile Include="policy.$(AssemblyName).config" />
+    <PolicyFile Include="policy.IronPython.Modules.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(FeatureCoreDlr)' != 'true'">

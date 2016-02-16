@@ -13,6 +13,7 @@
  *
  * ***************************************************************************/
 using System;
+using System.Reflection;
 
 namespace Microsoft.Scripting.Metadata {
     internal enum PEMagic : ushort {

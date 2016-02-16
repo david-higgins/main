@@ -12,7 +12,7 @@
  *
  *
  * ***************************************************************************/
-#if FEATURE_FULL_CONSOLE
+#if FEATURE_FULL_CONSOLE 
 
 using System;
 using System.IO;
@@ -74,7 +74,7 @@ namespace Microsoft.Scripting.Hosting.Shell {
                     _creatingThread.Abort(new KeyboardInterruptException(""));
                 }
             };
-
+#if !MAC	
             Console.CancelKeyPress += delegate(object sender, ConsoleCancelEventArgs e) {
                 // Dispatch the registered handler
                 ConsoleCancelEventHandler handler = this.ConsoleCancelEventHandler;
@@ -82,33 +82,20 @@ namespace Microsoft.Scripting.Hosting.Shell {
                     this.ConsoleCancelEventHandler(sender, e);
                 }
             };
+#endif
 
             _ctrlCEvent = new AutoResetEvent(false);
         }
 
         private void SetupColors(bool colorful) {
 
-            if (colorful) {
-                _promptColor = PickColor(ConsoleColor.Gray, ConsoleColor.White);
-                _outColor = PickColor(ConsoleColor.Cyan, ConsoleColor.White);
-                _errorColor = PickColor(ConsoleColor.Red, ConsoleColor.White);
-                _warningColor = PickColor(ConsoleColor.Yellow, ConsoleColor.White);
-            } else {
-                _promptColor = _outColor = _errorColor = _warningColor = Console.ForegroundColor;
-            }
-        }
+			_promptColor = ConsoleColor.Gray;
+			_outColor = ConsoleColor.Cyan;
+			_errorColor = ConsoleColor.Red;
+			_warningColor = ConsoleColor.Yellow;
 
-        private static ConsoleColor PickColor(ConsoleColor best, ConsoleColor other) {
-            best = IsDark(Console.BackgroundColor) ? MakeLight(best) : MakeDark(best);
-            other = IsDark(Console.BackgroundColor) ? MakeLight(other) : MakeDark(other);
-
-            if (Console.BackgroundColor != best) {
-                return best;
-            }
-
-            return other;
-        }
-
+		}
+			
         private static bool IsDark(ConsoleColor color) {
             // The dark colours are < 8 and the light are > 8,
             // but the two grays are a bit special
@@ -134,13 +121,13 @@ namespace Microsoft.Scripting.Hosting.Shell {
         }
 
         protected void WriteColor(TextWriter output, string str, ConsoleColor c) {
-            ConsoleColor origColor = Console.ForegroundColor;
-            Console.ForegroundColor = c;
+            //ConsoleColor origColor = Console.ForegroundColor;
+            //Console.ForegroundColor = c;
       
             output.Write(str);
             output.Flush();
 
-            Console.ForegroundColor = origColor;
+            //Console.ForegroundColor = origColor;
         }
 
         #region IConsole Members

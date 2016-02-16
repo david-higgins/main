@@ -15,7 +15,7 @@
 
 #if !FEATURE_CORE_DLR
 using Microsoft.Scripting.Ast;
-using Microsoft.Scripting.Utils;
+//using Microsoft.Scripting.Utils;
 #else
 using System.Linq.Expressions;
 #endif
@@ -263,8 +263,7 @@ namespace System.Dynamic {
         #endregion
 
         #region IDynamicMetaObjectProvider Members
-
-        DynamicMetaObject IDynamicMetaObjectProvider.GetMetaObject(Expression parameter) {
+		public DynamicMetaObject GetMetaObject(Expression parameter) {
             return new MetaExpando(parameter, this);
         }
         #endregion

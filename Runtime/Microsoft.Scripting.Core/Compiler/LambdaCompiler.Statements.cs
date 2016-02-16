@@ -363,7 +363,7 @@ namespace System.Linq.Expressions.Compiler {
             }
 
             // Sort the keys, and group them into buckets.
-            keys.Sort((x, y) => Math.Sign(x.Key - y.Key));
+			keys.Sort((x, y) => System.Math.Sign(x.Key - y.Key));
             var buckets = new List<List<SwitchLabel>>();
             foreach (var key in keys) {
                 AddToBuckets(buckets, key);

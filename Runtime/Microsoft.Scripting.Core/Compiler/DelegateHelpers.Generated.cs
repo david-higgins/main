@@ -23,7 +23,7 @@ using System.Runtime.CompilerServices;
 
 #if !FEATURE_CORE_DLR
 namespace Microsoft.Scripting.Ast.Compiler {
-    using Microsoft.Scripting.Utils;
+    //using Microsoft.Scripting.Utils;
 #else
 namespace System.Linq.Expressions.Compiler {
 #endif

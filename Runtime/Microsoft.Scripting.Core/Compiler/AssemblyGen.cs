@@ -25,6 +25,8 @@ using System.Text;
 using System.Threading;
 
 using Microsoft.Scripting.Utils;
+using ContractUtils = System.Dynamic.Utils.ContractUtils;
+using TypeUtils = System.Dynamic.Utils.TypeUtils;
 
 #if !FEATURE_CORE_DLR
 namespace Microsoft.Scripting.Ast.Compiler {

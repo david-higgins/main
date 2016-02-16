@@ -110,11 +110,7 @@ namespace Microsoft.Scripting.Metadata {
 
             int byteCount = GetLength();
             int charCount = Encoding.UTF8.GetCharCount(m_data, byteCount, null);
-#if CCI
             string result = new string('\0', charCount);
-#else
-            string result = String.FastAllocateString(charCount);
-#endif
             fixed (char* ptr = result) {
                 Encoding.UTF8.GetChars(m_data, byteCount, ptr, charCount, null);
             }

@@ -2,32 +2,97 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
   <Import Project="$(ProjectDir)..\..\..\Solutions\Common.proj" />
   <PropertyGroup>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{811AC32C-11F3-4ED8-92A7-A7E39C2BB704}</ProjectGuid>
+    <ProjectTypeGuids>{A3F8F2AB-B479-4A4A-A458-A89E7DC349F1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>IronPythonConsole</RootNamespace>
-    <AssemblyName>ipy</AssemblyName>
     <ApplicationIcon>ipy.ico</ApplicationIcon>
     <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisRuleSet>IronPythonConsole.ruleset</CodeAnalysisRuleSet>
     <AppConfig>..\App.$(ConfigurationFlavor).config</AppConfig>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <XamMacArch>x86_64</XamMacArch>
+    <StartupObject>PythonConsoleHost</StartupObject>
+    <TargetFrameworkIdentifier>Xamarin.Mac</TargetFrameworkIdentifier>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'FxCop|AnyCPU' ">
+    <OutputPath>bin\FxCop</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <AssemblyName>ipy</AssemblyName>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <AssemblyName>ipy</AssemblyName>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <AssemblyName>ipy</AssemblyName>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v2Debug|AnyCPU' ">
+    <OutputPath>bin\v2Debug</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <AssemblyName>ipy</AssemblyName>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v2Release|AnyCPU' ">
+    <OutputPath>bin\v2Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
+    <AssemblyName>ipy</AssemblyName>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'v45Release|AnyCPU' ">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\v45Release</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <AssemblyName>IronPythonConsole</AssemblyName>
+    <PlatformTarget>anycpu</PlatformTarget>
+    <Externalconsole>true</Externalconsole>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CreatePackage>false</CreatePackage>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <IncludeMonoRuntime>true</IncludeMonoRuntime>
+    <UseSGen>false</UseSGen>
+    <UseRefCounting>false</UseRefCounting>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Runtime\Microsoft.Scripting.Core\Microsoft.Scripting.Core.csproj" Condition="'$(FeatureCoreDlr)' != 'true'">
-      <Project>{2AE75F5A-CD1F-4925-9647-AF4D1C282FB4}</Project>
-      <Name>Microsoft.Scripting.Core</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\..\Runtime\Microsoft.Scripting\Microsoft.Scripting.csproj">
       <Project>{02FF0909-F5AD-48CF-A86A-345E721B7E40}</Project>
       <Name>Microsoft.Scripting</Name>
@@ -59,8 +124,13 @@
       <Link>App.Release.config</Link>
     </None>
     <None Include="IronPythonConsole.ruleset" />
+    <None Include="Info.plist" />
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!--  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />-->
   <Import Project="$(SolutionDir)Versioning.targets" />
   <Target Name="BeforeBuild" DependsOnTargets="GenerateBuildInfo" />
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Mac\Xamarin.Mac.CSharp.targets" />
+  <ItemGroup>
+    <Reference Include="Xamarin.Mac" />
+  </ItemGroup>
 </Project>

@@ -25,7 +25,7 @@ using System.Threading;
 
 #if !FEATURE_CORE_DLR
 namespace Microsoft.Scripting.Ast {
-    using Microsoft.Scripting.Utils;
+	using System.Dynamic.Utils;
 #else
 namespace System.Linq.Expressions {
 #endif
