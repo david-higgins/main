@@ -15,6 +15,7 @@
 
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using System.Threading;
@@ -84,7 +85,11 @@ namespace Microsoft.Scripting.Utils {
                 if (!_exceptionData.TryGetValue(e, out data)) {
                     return null;
                 }
-
+				if ((from f in data where f.Key == key select f).Count() == 0)
+				{
+					return null;
+					throw new ArgumentException("Key " + key.ToString() + " not found\n\n Had:\n" + String.Join("\n", (from ff in data select "\n key = " + ff.Key + "\n val = " + ff.Value).ToArray()));
+				}
                 return data.First(entry => entry.Key == key).Value;
             }
         }
