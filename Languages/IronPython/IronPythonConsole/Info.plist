@@ -2,35 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
-	<key>CFBundleIconFile</key>
-	<string>iPhone Backup Extractor-1</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.dave.ipyc</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>iPhone Backup Extractor</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>1</string>
-	<key>LSMinimumSystemVersion</key>
-	<string>10.7</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>reincubate</string>
-	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
-	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.utilities</string>
-	<key>CFBundleExecutable</key>
-	<string>iPhoneBackupExtractor</string>
-	<key>CFBundleDisplayName</key>
-	<string>ipyc</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.0.0.0</string>
+	<string>Iron Python Console</string>
 </dict>
 </plist>
