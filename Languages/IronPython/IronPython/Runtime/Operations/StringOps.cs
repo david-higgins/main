@@ -1923,8 +1923,9 @@ namespace IronPython.Runtime.Operations {
 
                     // publish under normalized name (all lower cases, -s replaced with _s)
                     d[normalizedName] = encs[i];
-                    // publish under Windows code page as well...                
-                    d["windows-" + encs[i].GetEncoding().WindowsCodePage.ToString()] = encs[i];
+                    if(encs[i].GetEncoding() != null)
+                        // publish under Windows code page as well...
+                        d["windows-" + encs[i].GetEncoding().WindowsCodePage.ToString()] = encs[i];
                     // publish under code page number as well...
                     d["cp" + encs[i].CodePage.ToString()] = d[encs[i].CodePage.ToString()] = encs[i];
                 }
