@@ -15,6 +15,7 @@
 #if FEATURE_MMAP
 
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -72,9 +73,12 @@ namespace IronPython.Modules {
             );
         }
 
+        private static string FormatError(int errorCode) {
+            return new Win32Exception(errorCode).Message;
+        }
+
         private static Exception WindowsError(int code) {
-            string message = CTypes.FormatError(code);
-            return PythonExceptions.CreateThrowable(PythonExceptions.WindowsError, code, message);
+            return PythonExceptions.CreateThrowable(PythonExceptions.WindowsError, code, FormatError(code));
         }
 
         [PythonType]
@@ -119,6 +123,9 @@ namespace IronPython.Modules {
                 if (offset < 0) {
                     throw PythonOps.OverflowError("memory mapped offset must be positive");
                 }
+                if (length > SysModule.maxsize) {
+                    throw PythonOps.OverflowError("cannot fit 'long' into an index-sized integer");
+                }
 
                 // CPython only allows offsets that are a multiple of ALLOCATIONGRANULARITY
                 if (offset % ALLOCATIONGRANULARITY != 0) {
@@ -142,9 +149,8 @@ namespace IronPython.Modules {
                     _file = MemoryMappedFile.CreateOrOpen(_mapName, length, _fileAccess);
                 } else {
                     // Memory-map an actual file
-                    long capacity = checked(_offset + length);
                     _offset = offset;
-                    
+
                     PythonFile file;
                     PythonContext pContext = PythonContext.GetContext(context);
                     if (!pContext.FileManager.TryGetFileFromId(pContext, fileno, out file)) {
@@ -158,6 +164,19 @@ namespace IronPython.Modules {
                     if (_fileAccess == MemoryMappedFileAccess.ReadWrite && !_sourceStream.CanWrite) {
                         throw WindowsError(PythonExceptions._WindowsError.ERROR_ACCESS_DENIED);
                     }
+
+                    if (length == 0) {
+                        length = _sourceStream.Length;
+                        if (length == 0) {
+                            throw PythonOps.ValueError("cannot mmap an empty file");
+                        }
+                        if (_offset >= length) {
+                            throw PythonOps.ValueError("mmap offset is greater than file size");
+                        }
+                        length -= _offset;
+                    }
+
+                    long capacity = checked(_offset + length);
 
                     // Enlarge the file as needed.
                     if (capacity > _sourceStream.Length) {
@@ -173,7 +192,13 @@ namespace IronPython.Modules {
                     );
                 }
 
-                _view = _file.CreateViewAccessor(_offset, length, _fileAccess);
+                try {
+                    _view = _file.CreateViewAccessor(_offset, length, _fileAccess);
+                } catch {
+                    _file.Dispose();
+                    _file = null;
+                    throw;
+                }
                 _position = 0L;
             }
 
@@ -545,8 +570,10 @@ namespace IronPython.Modules {
                         _view.Dispose();
                         _file.Dispose();
 
+                        var leaveOpen = true;
                         if (!_sourceStream.CanWrite) {
                             _sourceStream = new FileStream(_sourceStream.Name, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                            leaveOpen = false;
                         }
 
                         // Resize the file as needed.
@@ -555,7 +582,7 @@ namespace IronPython.Modules {
                         }
 
                         _file = MemoryMappedFile.CreateFromFile(
-                            _sourceStream, _mapName, _sourceStream.Length, _fileAccess, null, HandleInheritability.None, true
+                            _sourceStream, _mapName, _sourceStream.Length, _fileAccess, null, HandleInheritability.None, leaveOpen
                         );
 
                         _view = _file.CreateViewAccessor(_offset, newsize, _fileAccess);
@@ -674,7 +701,8 @@ namespace IronPython.Modules {
 
             public object size() {
                 using (new MmapLocker(this)) {
-                    return ReturnLong(_offset + _view.Capacity);
+                    if (_sourceStream == null) return ReturnLong(_view.Capacity);
+                    return ReturnLong(new FileInfo(_sourceStream.Name).Length);
                 }
             }
 

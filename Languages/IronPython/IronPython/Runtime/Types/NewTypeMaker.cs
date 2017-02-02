@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -108,8 +109,8 @@ namespace IronPython.Runtime.Types {
                     if (typeInfo.InterfaceTypes.Count == 0) {
                         // types that the have DynamicBaseType attribute can be used as NewType's directly, no 
                         // need to create a new type unless we're adding interfaces
-                        object[] attrs = typeInfo.BaseType.GetCustomAttributes(typeof(DynamicBaseTypeAttribute), false);
-                        if (attrs.Length > 0) {
+                        var attrs = typeInfo.BaseType.GetTypeInfo().GetCustomAttributes(typeof(DynamicBaseTypeAttribute), false);
+                        if (attrs.Any()) {
                             return typeInfo.BaseType;
                         }
                     }
@@ -344,12 +345,14 @@ namespace IronPython.Runtime.Types {
             gen.EmitFieldSet(_dictField);
         }
 
-        private ParameterInfo[] GetOverrideCtorSignature(ParameterInfo[] original) {
+        private ParameterInfoWrapper[] GetOverrideCtorSignature(ParameterInfo[] originalParameterInfo) {
+            ParameterInfoWrapper[] original = originalParameterInfo.Select(o => new ParameterInfoWrapper(o)).ToArray();
+
             if (typeof(IPythonObject).IsAssignableFrom(_baseType)) {
                 return original;
             }
 
-            ParameterInfo[] argTypes = new ParameterInfo[original.Length + 1];
+            ParameterInfoWrapper[] argTypes = new ParameterInfoWrapper[original.Length + 1];
             if (original.Length == 0 || original[0].ParameterType != typeof(CodeContext)) {
                 argTypes[0] = new ParameterInfoWrapper(typeof(PythonType), "cls");
                 Array.Copy(original, 0, argTypes, 1, argTypes.Length - 1);
@@ -409,7 +412,7 @@ namespace IronPython.Runtime.Types {
                 return;
             }
 
-            ParameterInfo[] overrideParams = GetOverrideCtorSignature(pis);
+            ParameterInfoWrapper[] overrideParams = GetOverrideCtorSignature(pis);
 
             Type[] argTypes = new Type[overrideParams.Length];
             string[] paramNames = new string[overrideParams.Length];
@@ -429,12 +432,21 @@ namespace IronPython.Runtime.Types {
                 if (origIndex >= 0) {
                     ParameterInfo pi = pis[origIndex];
 
+                    // Defines attributes that might be used in .net methods for overload detection and other
+                    // parameter based attribute logic. E.g. [BytesConversionAttribute] to make
+                    // enable automatic cast between .net IList<byte> and string
                     if (pi.IsDefined(typeof(ParamArrayAttribute), false)) {
                         pb.SetCustomAttribute(new CustomAttributeBuilder(
                             typeof(ParamArrayAttribute).GetConstructor(ReflectionUtils.EmptyTypes), ArrayUtils.EmptyObjects));
                     } else if (pi.IsDefined(typeof(ParamDictionaryAttribute), false)) {
                         pb.SetCustomAttribute(new CustomAttributeBuilder(
                             typeof(ParamDictionaryAttribute).GetConstructor(ReflectionUtils.EmptyTypes), ArrayUtils.EmptyObjects));
+                    } else if (pi.IsDefined(typeof(BytesConversionAttribute), false)) {
+                        pb.SetCustomAttribute(new CustomAttributeBuilder(
+                            typeof(BytesConversionAttribute).GetConstructor(ReflectionUtils.EmptyTypes), ArrayUtils.EmptyObjects));
+                    } else if (pi.IsDefined(typeof(BytesConversionNoStringAttribute), false)) {
+                        pb.SetCustomAttribute(new CustomAttributeBuilder(
+                            typeof(BytesConversionNoStringAttribute).GetConstructor(ReflectionUtils.EmptyTypes), ArrayUtils.EmptyObjects));
                     }
 
                     if ((pi.Attributes & ParameterAttributes.HasDefault) != 0) {
@@ -443,7 +455,7 @@ namespace IronPython.Runtime.Types {
                         } else {
                             pb.SetConstant(Convert.ChangeType(
                                 pi.DefaultValue, pi.ParameterType,
-                                System.Threading.Thread.CurrentThread.CurrentCulture
+                                System.Globalization.CultureInfo.CurrentCulture
                             ));
                         }
                     }
@@ -498,7 +510,7 @@ namespace IronPython.Runtime.Types {
         /// <param name="overrideParams"></param>
         /// <param name="i"></param>
         /// <returns></returns>
-        private static int GetOriginalIndex(ParameterInfo[] pis, ParameterInfo[] overrideParams, int i) {
+        private static int GetOriginalIndex(ParameterInfo[] pis, ParameterInfoWrapper[] overrideParams, int i) {
             if (pis.Length == 0 || pis[0].ParameterType != typeof(CodeContext)) {
                 return i - (overrideParams.Length - pis.Length);
             }
@@ -510,7 +522,7 @@ namespace IronPython.Runtime.Types {
             return i - (overrideParams.Length - pis.Length);
         }
 
-        private static void CallBaseConstructor(ConstructorInfo parentConstructor, ParameterInfo[] pis, ParameterInfo[] overrideParams, ILGen il) {
+        private static void CallBaseConstructor(ConstructorInfo parentConstructor, ParameterInfo[] pis, ParameterInfoWrapper[] overrideParams, ILGen il) {
             il.EmitLoadArg(0);
 #if DEBUG
             int lastIndex = -1;
@@ -590,7 +602,7 @@ namespace IronPython.Runtime.Types {
             // true if our base type implements IDMOP already
             bool baseIdo = typeof(IDynamicMetaObjectProvider).IsAssignableFrom(_baseType);
             if (baseIdo) {
-                InterfaceMapping mapping = _baseType.GetInterfaceMap(typeof(IDynamicMetaObjectProvider));
+                InterfaceMapping mapping = _baseType.GetTypeInfo().GetRuntimeInterfaceMap(typeof(IDynamicMetaObjectProvider));
                 if (mapping.TargetMethods[0].IsPrivate) {
                     // explicitly implemented IDynamicMetaObjectProvider, we cannot override it.
 
@@ -683,7 +695,7 @@ namespace IronPython.Runtime.Types {
                 
             // baseMetaObject
             if (baseIdo) {
-                InterfaceMapping imap = _baseType.GetInterfaceMap(typeof(IDynamicMetaObjectProvider));
+                InterfaceMapping imap = _baseType.GetTypeInfo().GetRuntimeInterfaceMap(typeof(IDynamicMetaObjectProvider));
 
                 il.EmitLoadArg(0);  // this
                 il.EmitLoadArg(1);  // parameter
@@ -929,7 +941,7 @@ namespace IronPython.Runtime.Types {
             if (type.IsAbstract() && !type.IsInterface()) {
                 // abstract types can define interfaces w/o implementations
                 foreach (Type iface in type.GetInterfaces()) {
-                    InterfaceMapping mapping = type.GetInterfaceMap(iface);
+                    InterfaceMapping mapping = type.GetTypeInfo().GetRuntimeInterfaceMap(iface);
                     for (int i = 0; i < mapping.TargetMethods.Length; i++) {
                         
                         if (mapping.TargetMethods[i] == null) {
@@ -1405,11 +1417,8 @@ namespace IronPython.Runtime.Types {
             return new ILGen(builder.GetILGenerator());
         }
 
-#if WIN8 // TODO: what is ReservedMask?
-        private const MethodAttributes MethodAttributesToEraseInOveride = MethodAttributes.Abstract | (MethodAttributes)0xD000;
-#else
-        private const MethodAttributes MethodAttributesToEraseInOveride = MethodAttributes.Abstract | MethodAttributes.ReservedMask;
-#endif
+        private const MethodAttributes MethodAttributesReservedMask = (MethodAttributes)0xD000; // MethodAttributes.ReservedMask
+        private const MethodAttributes MethodAttributesToEraseInOveride = MethodAttributes.Abstract | MethodAttributesReservedMask;
 
         private ILGen DefineMethodOverride(MethodAttributes extra, Type type, string name, out MethodInfo decl, out MethodBuilder impl) {
             decl = type.GetMethod(name);
@@ -1557,7 +1566,7 @@ namespace IronPython.Runtime.Types {
             // The addition is to a seperate cache that NewTypeMaker maintains.  TypeInfo consults this
             // cache when doing member lookup and includes these members in the returned members.
             foreach (MethodInfo mi in finishedType.GetMethods()) {
-                if (IsInstanceType(finishedType.BaseType) && IsInstanceType(mi.DeclaringType)) continue;
+                if (IsInstanceType(finishedType.GetTypeInfo().BaseType) && IsInstanceType(mi.DeclaringType)) continue;
 
                 string methodName = mi.Name;
                 if (methodName.StartsWith(BaseMethodPrefix) || methodName.StartsWith(FieldGetterPrefix) || methodName.StartsWith(FieldSetterPrefix)) {
@@ -1566,7 +1575,7 @@ namespace IronPython.Runtime.Types {
                             // if it's a property we want to override it
                             string propName = newName.Substring(4);
 
-                            MemberInfo[] defaults = finishedType.BaseType.GetDefaultMembers();
+                            MemberInfo[] defaults = finishedType.GetTypeInfo().BaseType.GetDefaultMembers();
                             if (defaults.Length > 0) {
                                 // if it's an indexer then we want to override get_Item/set_Item methods
                                 // which map to __getitem__ and __setitem__ as normal Python methods.

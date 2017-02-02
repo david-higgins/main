@@ -30,6 +30,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -252,7 +253,9 @@ namespace IronPython.Runtime.Operations {
             if (o is double) return DoubleOps.__str__(context, (double)o);
             if ((dt = o as PythonType) != null) return dt.__repr__(DefaultContext.Default);
             if ((oc = o as OldClass) != null) return oc.ToString();
+#if FEATURE_COM
             if (o.GetType() == typeof(object).Assembly.GetType("System.__ComObject")) return ComOps.__repr__(o);
+#endif
 
             object value = PythonContext.InvokeUnaryOperator(context, UnaryOperators.String, o);
             string ret = value as string;
@@ -315,6 +318,12 @@ namespace IronPython.Runtime.Operations {
 
         public static bool IsSubClass(PythonType/*!*/ c, PythonType/*!*/ typeinfo) {
             Assert.NotNull(c, typeinfo);
+
+            if (typeinfo == Builtin.basestring &&
+                (IsSubClass(c, DynamicHelpers.GetPythonTypeFromType(typeof(string))) ||
+                IsSubClass(c, DynamicHelpers.GetPythonTypeFromType(typeof(Bytes))))) {
+                return true;
+            }
 
             if (c.OldClass != null) {
                 return typeinfo.__subclasscheck__(c.OldClass);
@@ -504,20 +513,28 @@ namespace IronPython.Runtime.Operations {
             return !IsTrue(o);
         }
 
-        public static object Is(object x, object y) {
-            return x == y ? ScriptingRuntimeHelpers.True : ScriptingRuntimeHelpers.False;
+        public static bool IsRetBool(object x, object y) {
+            if (x == y)
+                return true;
+
+            // Special case "is True"/"is False" checks. They are somewhat common in 
+            // Python (particularly in tests), but non-Python code may not stick to the
+            // convention of only using the two singleton instances at ScriptingRuntimeHelpers.
+            // (https://github.com/IronLanguages/main/issues/1299)
+            var xb = x as bool?;
+            if (xb.HasValue)
+                return xb == (y as bool?);
+
+            // else
+            return false;
         }
 
-        public static bool IsRetBool(object x, object y) {
-            return x == y;
+        public static object Is(object x, object y) {
+            return IsRetBool(x, y) ? ScriptingRuntimeHelpers.True : ScriptingRuntimeHelpers.False;
         }
 
         public static object IsNot(object x, object y) {
-            return x != y ? ScriptingRuntimeHelpers.True : ScriptingRuntimeHelpers.False;
-        }
-
-        public static bool IsNotRetBool(object x, object y) {
-            return x != y;
+            return IsRetBool(x, y) ? ScriptingRuntimeHelpers.False : ScriptingRuntimeHelpers.True;
         }
 
         internal delegate T MultiplySequenceWorker<T>(T self, int count);
@@ -874,6 +891,41 @@ namespace IronPython.Runtime.Operations {
                 return octal;
             }
             throw TypeError("oct() argument cannot be converted to octal");
+        }
+
+        public static object Index(object o) {
+            if (o is int) {
+                return Int32Ops.__index__((int)o);
+            } else if (o is uint) {
+                return UInt32Ops.__index__((uint)o);
+            } else if (o is ushort) {
+                return UInt16Ops.__index__((ushort)o);
+            } else if (o is short) {
+                return Int16Ops.__index__((short)o);
+            } else if (o is byte) {
+                return ByteOps.__index__((byte)o);
+            } else if (o is sbyte) {
+                return SByteOps.__index__((sbyte)o);
+            } else if (o is long) {
+                return Int64Ops.__index__((long)o);
+            } else if(o is ulong) {
+                return UInt64Ops.__index__((ulong)o);
+            } else if (o is BigInteger) {
+                return BigIntegerOps.__index__((BigInteger)o);
+            }
+
+            object index;
+
+            if (PythonTypeOps.TryInvokeUnaryOperator(DefaultContext.Default,
+                o,
+                "__index__",
+                out index)) {
+                if (!(index is int) && !(index is double))
+                    throw PythonOps.TypeError("__index__ returned non-(int,long) (type {0})", PythonTypeOps.GetName(index));
+
+                return index;
+            }
+            throw TypeError("'{0}' object cannot be interpreted as an index", PythonTypeOps.GetName(o));
         }
 
         public static int Length(object o) {
@@ -1233,7 +1285,7 @@ namespace IronPython.Runtime.Operations {
         }
 
         public static object IsMappingType(CodeContext/*!*/ context, object o) {
-            if (o is IDictionary || o is PythonDictionary || o is IDictionary<object, object> || o is PythonDictionary) {
+            if (o is IDictionary || o is PythonDictionary || o is IDictionary<object, object>) {
                 return ScriptingRuntimeHelpers.True;
             }
             object getitem;
@@ -1366,7 +1418,7 @@ namespace IronPython.Runtime.Operations {
             Debug.Assert(iwr != null);
 
             InstanceFinalizer nif = new InstanceFinalizer(context, newObject);
-            iwr.SetFinalizer(new WeakRefTracker(nif, nif));
+            iwr.SetFinalizer(new WeakRefTracker(iwr, nif, nif));
         }
 
         private static object FindMetaclass(CodeContext/*!*/ context, PythonTuple bases, PythonDictionary dict) {
@@ -1427,7 +1479,15 @@ namespace IronPython.Runtime.Operations {
                     }
                     bases = newBases;
                     break;
+                } else if(dt is PythonType) {
+                    PythonType pt = dt as PythonType;
+                    if (pt.Equals(PythonType.GetPythonType(typeof(Enum))) || pt.Equals(PythonType.GetPythonType(typeof(Array)))
+                    || pt.Equals(PythonType.GetPythonType(typeof(Delegate))) || pt.Equals(PythonType.GetPythonType(typeof(ValueType)))) {
+                        // .NET does not allow inheriting from these types
+                        throw PythonOps.TypeError("cannot derive from special class '{0}'", pt.FinalSystemType.FullName);
+                    }
                 }
+
             }
             PythonTuple tupleBases = PythonTuple.MakeTuple(bases);
 
@@ -1726,7 +1786,7 @@ namespace IronPython.Runtime.Operations {
             string s = o == null ? "None" : PythonOps.ToString(o);
 
             PythonOps.Write(context, dest, s);
-            PythonOps.SetSoftspace(dest, !s.EndsWith("\n"));
+            PythonOps.SetSoftspace(dest, !s.EndsWith("\n") && !s.EndsWith("\t"));
         }
 
         /// <summary>
@@ -2053,7 +2113,16 @@ namespace IronPython.Runtime.Operations {
         }
 
         internal static bool TryGetEnumerator(CodeContext/*!*/ context, object enumerable, out IEnumerator enumerator) {
+
             enumerator = null;
+
+            if (enumerable is PythonType) {
+                var ptEnumerable = (PythonType)enumerable;
+                if (!ptEnumerable.IsIterable(context)) {
+                    return false;
+                }
+            }
+
             IEnumerable enumer;
             if (PythonContext.GetContext(context).TryConvertToIEnumerable(enumerable, out enumer)) {
                 enumerator = enumer.GetEnumerator();
@@ -2343,6 +2412,11 @@ namespace IronPython.Runtime.Operations {
         private static Exception MakeExceptionWorker(CodeContext/*!*/ context, object type, object value, object traceback, bool forRethrow) {
             Exception throwable;
             PythonType pt;
+
+            // unwrap tuples
+            while (type is PythonTuple && ((PythonTuple)type).Any()) {
+                type = ((PythonTuple)type).First();
+            }
 
             if (type is PythonExceptions.BaseException) {
                 throwable = PythonExceptions.ToClr(type);
@@ -3527,6 +3601,12 @@ namespace IronPython.Runtime.Operations {
             }
         }
 
+        public static void Warn3k(CodeContext/*!*/ context, string message, params object[] args) {
+            if (context.GetPythonContext().PythonOptions.WarnPython30) {
+                Warn(context, PythonExceptions.DeprecationWarning, message, args);
+            }
+        }
+
         public static void ShowWarning(CodeContext/*!*/ context, PythonType category, string message, string filename, int lineNo) {
             PythonContext pc = PythonContext.GetContext(context);
             object warnings = pc.GetWarningsModule(), warn = null;
@@ -3666,7 +3746,11 @@ namespace IronPython.Runtime.Operations {
         /// Provides access to AppDomain.DefineDynamicAssembly which cannot be called from a DynamicMethod
         /// </summary>
         public static AssemblyBuilder DefineDynamicAssembly(AssemblyName name, AssemblyBuilderAccess access) {
+#if FEATURE_ASSEMBLYBUILDER_DEFINEDYNAMICASSEMBLY
+            return AssemblyBuilder.DefineDynamicAssembly(name, access);
+#else
             return AppDomain.CurrentDomain.DefineDynamicAssembly(name, access);
+#endif
         }
 
         /// <summary>
@@ -3708,7 +3792,7 @@ namespace IronPython.Runtime.Operations {
         /// the exit code that the program reported via SystemExit or 0.
         /// </summary>
         public static int InitializeModule(Assembly/*!*/ precompiled, string/*!*/ main, string[] references) {
-            return InitializeModuleEx(precompiled, main, references, false);
+            return InitializeModuleEx(precompiled, main, references, false, null);
         }
 
         /// <summary>
@@ -3717,10 +3801,17 @@ namespace IronPython.Runtime.Operations {
         /// the exit code that the program reported via SystemExit or 0.
         /// </summary>
         public static int InitializeModuleEx(Assembly/*!*/ precompiled, string/*!*/ main, string[] references, bool ignoreEnvVars) {
+            return InitializeModuleEx(precompiled, main, references, ignoreEnvVars, null);
+        }
+
+
+        public static int InitializeModuleEx(Assembly/*!*/ precompiled, string/*!*/ main, string[] references, bool ignoreEnvVars, Dictionary<string, object> options) {
             ContractUtils.RequiresNotNull(precompiled, "precompiled");
             ContractUtils.RequiresNotNull(main, "main");
 
-            Dictionary<string, object> options = new Dictionary<string, object>();
+            if(options == null) {
+                options = new Dictionary<string, object>();
+            }
             options["Arguments"] = Environment.GetCommandLineArgs();
 
             var pythonEngine = Python.CreateEngine(options);
@@ -3745,7 +3836,7 @@ namespace IronPython.Runtime.Operations {
 
             if (references != null) {
                 foreach (string referenceName in references) {
-                    pythonContext.DomainManager.LoadAssembly(Assembly.Load(referenceName));
+                    pythonContext.DomainManager.LoadAssembly(Assembly.Load(new AssemblyName(referenceName)));
                 }
             }
 
@@ -4041,8 +4132,12 @@ namespace IronPython.Runtime.Operations {
 
         public static Exception AttributeErrorForMissingAttribute(object o, string name) {
             PythonType dt = o as PythonType;
-            if (dt != null)
+            if (dt != null) {
                 return PythonOps.AttributeErrorForMissingAttribute(dt.Name, name);
+            }
+            else if (o is NamespaceTracker) {
+                return PythonOps.AttributeErrorForMissingAttribute(PythonTypeOps.GetName(o), name);
+            }
 
             return AttributeErrorForReadonlyAttribute(PythonTypeOps.GetName(o), name);
         }
@@ -4071,6 +4166,19 @@ namespace IronPython.Runtime.Operations {
         public static Exception UnicodeEncodeError(string format, params object[] args) {
             return new System.Text.EncoderFallbackException(string.Format(format, args));
         }
+
+#if NETSTANDARD
+        private static ConstructorInfo GetConstructor(this Type type, BindingFlags bindingAttr, object binder, Type[] types, object[] modifiers) {
+            ConstructorInfo[] ctors = type.GetConstructors(bindingAttr);
+            foreach (ConstructorInfo ctor in ctors) {
+                ParameterInfo[] parameters = ctor.GetParameters();
+                if (parameters.Length == types.Length && Enumerable.SequenceEqual(types, parameters.Select(p => p.ParameterType))) {
+                    return ctor;
+                }
+            }
+            return null;
+        }
+#endif
 
         public static Exception UnicodeEncodeError(string encoding, char charUnkown, int index,
             string format, params object[] args) {
@@ -4579,6 +4687,7 @@ namespace IronPython.Runtime.Operations {
         }
     }
 
+    [DebuggerDisplay("Code = {Code.co_name}, Line = {Frame.f_lineno}")]
     public struct FunctionStack {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104:DoNotDeclareReadOnlyMutableReferenceTypes")]
         public readonly CodeContext/*!*/ Context;

@@ -293,13 +293,14 @@ if is_cli or is_silverlight:
         except MyClass, mc:
             Assert(mc.__class__ == MyClass)
         
-        # BUG 430 intern(None) should throw TypeError
-        try:
-            intern(None)
-            Assert(False)
-        except TypeError:
-            pass
-        # /BUG
+        if not is_netstandard: # intern doesn't work in netstandard
+            # BUG 430 intern(None) should throw TypeError
+            try:
+                intern(None)
+                Assert(False)
+            except TypeError:
+                pass
+            # /BUG
         
         
         # BUG 393 exceptions throw when bad value passed to except
@@ -744,6 +745,7 @@ def test_break_and_continue():
     AreEqual(test_outer_for_with_finally(state, True), 42)
     AreEqual(state.finallyCalled, True)
 
+@skip("netstandard") # no System.AppDomain in netstandard
 def test_serializable_clionly():
     import clr
     import System
@@ -974,7 +976,7 @@ def test_module_exceptions():
     """verify exceptions in modules are like user defined exception objects, not built-in types."""
     
     # these modules have normal types...
-    normal_types = ['sys', 'clr', 'exceptions', '__builtin__', '_winreg', 'mmap', 'nt']       
+    normal_types = ['sys', 'clr', 'exceptions', '__builtin__', '_winreg', 'mmap', 'nt', 'posix']       
     builtins = [x for x in sys.builtin_module_names if x not in normal_types ]
     for module in builtins:
         mod = __import__(module)
@@ -986,10 +988,8 @@ def test_module_exceptions():
                     Assert(repr(val).startswith("<class "))
                     val.x = 2
                     AreEqual(val.x, 2)
-                elif is_cpython:
+                else:
                     Assert(repr(val).startswith("<type "))
-                else: #http://ironpython.codeplex.com/workitem/28383
-                    Assert(repr(val).startswith("<class "))
 
 def test_raise_inside_str():
     #raising an error inside the __str__ used to cause an unhandled exception.
@@ -1059,5 +1059,13 @@ def test_cp35300():
     # generated implementation do not restrict parameters of __init__
     AreNotEqual(None, CP35300_Derived("a", x="b"))
 
+def test_issue1164():
+    class error(Exception):
+        pass
+
+    def f():
+	    raise (error,), 0
+
+    AssertError(error, f)
 
 run_test(__name__)

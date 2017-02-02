@@ -28,7 +28,7 @@ Work Item number.
 #------------------------------------------------------------------------------
 #--Imports
 from iptest.assert_util import *
-from iptest.process_util import launch
+from iptest.process_util import launch, run_csc
 import sys
 
 #------------------------------------------------------------------------------
@@ -36,6 +36,7 @@ import sys
 
 #------------------------------------------------------------------------------
 #--Test cases
+@skip("netstandard") # no System.AppDomain in netstandard
 @skip("win32", "silverlight")
 def test_cp18345():
     import System
@@ -50,13 +51,14 @@ def test_cp18345():
     AreEqual(z, 100)
 
 #------------------------------------------------------------------------------
+@skip("netstandard") # TODO: figure out
 @skip("silverlight")
 def test_cp17420():
     #Create a temporary Python file
     test_file_name = path_combine(testpath.temporary_dir, "cp17420.py")
     test_log_name  = path_combine(testpath.temporary_dir, "cp17420.log")
     try:
-        nt.remove(test_log_name)
+        os.remove(test_log_name)
     except:
         pass
     
@@ -77,6 +79,9 @@ file(r"%s", "w").writelines(output)''' % (test_log_name)
     lines = temp_file.readlines()
     temp_file.close()
     AreEqual(len(lines), 100)
+
+    os.unlink(test_file_name)
+    os.unlink(test_log_name)
     
 #------------------------------------------------------------------------------
 def test_cp17274():
@@ -237,51 +242,26 @@ def test_struct_uint_bad_value_cp20039():
 
     import _struct
     global andCalled
-    if is_ironpython: #http://ironpython.codeplex.com/workitem/27901
-        AreEqual(_struct.Struct('L').pack(4294967296), '\x00\x00\x00\x00')
-    else:
-        AssertErrorWithMessage(_struct.error, "integer out of range for 'L' format code",
-                               _struct.Struct('L').pack, 4294967296)
-    if is_ironpython: #http://ironpython.codeplex.com/workitem/27901
-        AreEqual(_struct.Struct('L').pack(-1), '\xff\xff\xff\xff')
-    else:
-        AssertErrorWithMessage(_struct.error, "integer out of range for 'L' format code",
-                               _struct.Struct('L').pack, -1)
-    
-    if is_ironpython: #http://ironpython.codeplex.com/workitem/27901
-        AreEqual(_struct.Struct('L').pack(x(0)), '\x00\x00\x00\x00')
-        AreEqual(andCalled, True)
-    else:
-        AssertErrorWithMessage(Exception, "foo",
-                               _struct.Struct('L').pack, x(0))
-    
-    if is_ironpython: #http://ironpython.codeplex.com/workitem/27901
-        AreEqual(_struct.Struct('I').pack(4294967296), '\x00\x00\x00\x00')
-    else:
-        AssertErrorWithMessage(_struct.error, "integer out of range for 'I' format code",
-                               _struct.Struct('I').pack, 4294967296)
-
-    if is_ironpython: #http://ironpython.codeplex.com/workitem/27901
-        AreEqual(_struct.Struct('I').pack(-1), '\xff\xff\xff\xff')
-    else:
-        AssertErrorWithMessage(_struct.error, "integer out of range for 'I' format code",
-                               _struct.Struct('I').pack, -1)
     andCalled = False
-    if is_ironpython: #http://ironpython.codeplex.com/workitem/27901
-        AreEqual(_struct.Struct('I').pack(x(0)), '\x00\x00\x00\x00')
-        AreEqual(andCalled, True)
-    else:
-        AssertErrorWithMessage(Exception, "foo",
-                               _struct.Struct('I').pack, x(0))
 
-    if is_ironpython: #http://ironpython.codeplex.com/workitem/27901
-        AssertError(OverflowError, _struct.Struct('I').pack, x(-1))
-        AssertError(OverflowError, _struct.Struct('L').pack, x(-1))
-    else:
-        AssertErrorWithMessage(Exception, "foo", _struct.Struct('I').pack, x(-1))
-        AssertErrorWithMessage(Exception, "foo", _struct.Struct('L').pack, x(-1))
+    AssertErrorWithMessage(_struct.error, "integer out of range for 'L' format code",
+                           _struct.Struct('L').pack, 4294967296)
+    AssertErrorWithMessage(_struct.error, "integer out of range for 'L' format code",
+                           _struct.Struct('L').pack, -1)
+    AssertErrorWithMessage(Exception, "foo",
+                           _struct.Struct('L').pack, x(0))
+    AssertErrorWithMessage(Exception, "foo", _struct.Struct('L').pack, x(-1))
 
-    
+    AssertErrorWithMessage(_struct.error, "integer out of range for 'I' format code",
+                           _struct.Struct('I').pack, 4294967296)
+    AssertErrorWithMessage(_struct.error, "integer out of range for 'I' format code",
+                           _struct.Struct('I').pack, -1)
+    AssertErrorWithMessage(Exception, "foo",
+                           _struct.Struct('I').pack, x(0))
+    AssertErrorWithMessage(Exception, "foo", _struct.Struct('I').pack, x(-1))
+
+    # __and__ was called in Python2.6 check that this is no longer True
+    Assert(not andCalled)
 
 def test_reraise_backtrace_cp20051():
     '''
@@ -315,15 +295,18 @@ def test_reraise_backtrace_cp20051():
         # CPython reports 2 frames, IroPython includes the re-raise and reports 3
         Assert(len(exc2_list) >= 2)
 
-@skip("silverlight")
+@skip("silverlight", "posix")
 def test_winreg_error_cp17050():
     import _winreg
     AreEqual(_winreg.error, WindowsError)
 
-
 @skip("win32", "silverlight")
 def test_indexing_value_types_cp20370():
-    clr.AddReference("System.Drawing")
+    import clr
+    if is_netstandard:
+        clr.AddReference("System.Drawing.Primitives")
+    else:
+        clr.AddReference("System.Drawing")
     from System.Drawing import Point
     
     p = Point(1,2)
@@ -443,6 +426,8 @@ def test_type_delegate_conversion():
 
 
 def test_module_alias_cp19656():
+    old_path = [x for x in sys.path]
+    sys.path.append(testpath.public_testdir);
     stuff_mod = path_combine(testpath.public_testdir, "stuff.py")
     check_mod = path_combine(testpath.public_testdir, "check.py")
     
@@ -453,35 +438,37 @@ def test_module_alias_cp19656():
         from check import check
         AreEqual(check(stuff), 3)
     finally:
-        import nt
-        nt.unlink(stuff_mod)
-        nt.unlink(check_mod)
+        import os
+        os.unlink(stuff_mod)
+        os.unlink(check_mod)
+        sys.path = old_path
 
 def test_cp24691():
     import os
     pwd = os.getcwd()
     AreEqual(os.path.abspath("bad:"),
-             os.getcwd() + "\\bad:")
+             os.path.join(os.getcwd(), "bad:"))
 
 def test_cp24690():
     import errno
     AreEqual(errno.errorcode[2],
              "ENOENT")
 
+@skip("posix")
 def test_cp24692():
-    import errno, nt, stat
+    import errno, os, stat
     dir_name = "cp24692_testdir"
     try:
-        nt.mkdir(dir_name)
-        nt.chmod(dir_name, stat.S_IREAD)
+        os.mkdir(dir_name)
+        os.chmod(dir_name, stat.S_IREAD)
         try:
-            nt.rmdir(dir_name)
+            os.rmdir(dir_name)
         except WindowsError, e:
             pass
         AreEqual(e.errno, errno.EACCES)
     finally:
-        nt.chmod(dir_name, stat.S_IWRITE)
-        nt.rmdir(dir_name)
+        os.chmod(dir_name, stat.S_IWRITE)
+        os.rmdir(dir_name)
 
 # TODO: this test needs to run against Dev10 builds as well
 @skip("win32")
@@ -555,6 +542,7 @@ def test_cp24573():
     AssertErrorWithMessage(TypeError, "f() got multiple values for keyword argument 'a'",
                            lambda: f(1, a=3))
 
+@skip("netstandard") # no System.Drawing.Pen in netstandard
 @skip("win32")
 def test_cp24802():
     import clr
@@ -635,7 +623,6 @@ def cp22692_helper(source, flags):
         retVal.append(type(err2))
     return retVal 
 
-@skip("cli", "silverlight")
 def test_cp22692():
     AreEqual(cp22692_helper("if 1:", 0x200),
              [SyntaxError, IndentationError])
@@ -649,7 +636,7 @@ def test_cp22692():
 @skip("win32")
 def test_cp23545():
     import clr
-    clr.AddReference("rowantest.defaultmemberscs.dll")
+    clr.AddReference("rowantest.defaultmemberscs")
     from Merlin.Testing.DefaultMemberSample import ClassWithDefaultField
     AreEqual(repr(ClassWithDefaultField.Field),
              "<field# Field on ClassWithDefaultField>")
@@ -661,15 +648,16 @@ def test_cp23545():
     AreEqual(ClassWithDefaultField().Field, 10)
 
 def test_cp20174():
-    cp20174_path = testpath.public_testdir + r"\cp20174"
+    old_path = [x for x in sys.path]
+
+    sys.path.append(testpath.public_testdir)
+    cp20174_path = path_combine(testpath.public_testdir, "cp20174")
     
     try:
-        nt.mkdir(cp20174_path)
-        
-        cp20174_init = cp20174_path + r"\__init__.py"
+        cp20174_init = path_combine(cp20174_path, "__init__.py")
         write_to_file(cp20174_init, "import a")
         
-        cp20174_a = cp20174_path + r"\a.py"
+        cp20174_a = path_combine(cp20174_path,  "a.py")
         write_to_file(cp20174_a, """
 from property import x
 class C:
@@ -677,21 +665,25 @@ class C:
     x = property(_get_x)
 """)
         
-        cp20174_property = cp20174_path + r"\property.py"
+        cp20174_property = path_combine(cp20174_path, "property.py")
         write_to_file(cp20174_property, "x=1")
         
         import cp20174
         AreEqual(cp20174.property.x, 1)
         
     finally:
-        for x in nt.listdir(cp20174_path):
-            nt.unlink(cp20174_path + "\\" + x)
-        nt.rmdir(cp20174_path)
+        for x in os.listdir(cp20174_path):
+            os.unlink(path_combine(cp20174_path, x))
+        os.rmdir(cp20174_path)
+        sys.path = old_path
 
 @skip("win32")
 def test_cp20370():
     import clr
-    clr.AddReference("System.Drawing")
+    if is_netstandard:
+        clr.AddReference("System.Drawing.Primitives")
+    else:
+        clr.AddReference("System.Drawing")
     from System.Drawing import Point
     p1 = Point(1, 2)
     p2 = Point(3, 4)
@@ -701,11 +693,12 @@ def test_cp20370():
     l[-1] = p2
     AreEqual(id(l[-1]), id(p2))
 
+@skip("netstandard") # PlatformNotSupportedException
 @skip("win32", "silverlight")
 def test_cp23878():
     import clr
-    clr.AddReference("rowantest.delegatedefinitions.dll")
-    clr.AddReference("rowantest.typesamples.dll")
+    clr.AddReference("rowantest.delegatedefinitions")
+    clr.AddReference("rowantest.typesamples")
     from Merlin.Testing import Delegate, Flag
     from time import sleep
     
@@ -760,13 +753,13 @@ def test_cp24169():
     
     orig_syspath = [x for x in sys.path]
     try:
-        sys.path.append(os.getcwd() + r"\encoded_files")
+        sys.path.append(os.path.join(os.getcwd(), "encoded_files"))
         import cp20472 #no encoding specified and has non-ascii characters
         raise Exception("Line above should had thrown!")
     except SyntaxError, e:
         Assert(e.msg.startswith("Non-ASCII character '\\xcf' in file"))
         Assert(e.msg.endswith("on line 1, but no encoding declared; see http://www.python.org/peps/pep-0263.html for details"))
-        Assert("\\encoded_files\\cp20472.py" in e.msg, e.msg)
+        Assert("%sencoded_files%scp20472.py" % (os.sep, os.sep) in e.msg, e.msg)
     finally:
         sys.path = orig_syspath
 
@@ -852,9 +845,134 @@ def test_cp24677():
         pass
 
 
+@skip("netstandard") # no clr.CompileModules
+def test_gh1357():
+    import os
+    filename = os.path.join(testpath.temporary_dir, 'gh1357.py')
+    dll = os.path.join(testpath.temporary_dir, "test.dll")
+    with open(filename, 'w') as f:
+        f.write('{(1,): None}')
 
+    import clr
+    try:
+        clr.CompileModules(dll, filename)
+    except:
+        Fail('Failed to compile the specified file')
+    finally:
+        os.unlink(filename)
+        os.unlink(dll)
 
+def test_gh1435():
+    code = """
+using System;
 
+ /// <summary>
+/// Some description1.
+/// </summary>
+public class gh1435
+{
+    /// <summary>
+    /// Some description2.
+    /// </summary>
+    public static String strFoo= "foo";
+
+    /// <summary>
+    /// Some description3.
+    /// </summary>
+    public gh1435()
+    {
+
+    }
+
+    /// <summary>
+    /// Some description4.
+    /// </summary>
+    public int someMethod1()
+    {
+        return 8;
+    }
+
+    /// <summary>
+    /// Some description5.
+    /// </summary>
+    public int someMethod2(string strSome)
+    {
+        return 8;
+    }
+
+    /// <summary>
+    /// Some description6.
+    /// </summary>
+    public int someMethod3(out string strSome)
+    {
+        strSome = "Some string.";
+        return 8;
+    }
+
+    /// <summary>
+    /// Another description1
+    /// </summary>
+    public int someMethod4(out string strSome, ref int foo) 
+    {
+        strSome = "Another string";
+        foo = 10;
+        return 5;
+    }
+}
+"""
+    
+    tmp = testpath.temporary_dir
+
+    test_cs, test_dll, test_xml = path_combine(tmp, 'gh1435.cs'), path_combine(tmp, 'gh1435.dll'), path_combine(tmp, 'gh1435.xml')
+
+    write_to_file(test_cs, code)
+
+    AreEqual(run_csc("/nologo /doc:" + test_xml + " /target:library /out:" + test_dll + " " + test_cs), 0)
+    
+    from cStringIO import StringIO
+    class _Capturing(list):
+        def __enter__(self):
+            self._stdout = sys.stdout
+            sys.stdout = self._stringio = StringIO()
+            return self
+
+        def __exit__(self, *args):
+            self.extend(self._stringio.getvalue())
+            sys.stdout = self._stdout
+
+    expected = """Help on method_descriptor:
+
+someMethod4(...)
+    someMethod4(self: clsBar, foo: int) -> (int, str, int)
+
+    Another description1""".replace('\r', '')
+
+    clr.AddReferenceToFileAndPath(test_dll)
+    import gh1435
+    with _Capturing() as output:
+        help(gh1435.someMethod4)
+    Assert('\n'.join(output), expected) 
+
+def test_gh278():
+    import _random  
+    r = _random.Random()
+    s1 = r.getstate()
+    s2 = r.getstate()
+    AreNotSame(s1, s2)
+    AreEqual(s1, s2)
+
+    r.jumpahead(100)
+    s3 = r.getstate()
+    AreNotSame(s3, s1)
+    AreNotEqual(s3, s1)
+
+def test_gh1549():
+    import hashlib
+    m = hashlib.md5()
+    m.digest()
+    m.update('foo')
+    m.digest()
+    
 #------------------------------------------------------------------------------
 #--Main
 run_test(__name__)

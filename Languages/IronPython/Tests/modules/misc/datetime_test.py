@@ -217,7 +217,7 @@ def test_date():
     x = datetime.date.fromtimestamp(1000000000.0)
     AreEqual(x.year, 2001)
     AreEqual(x.month, 9)
-    AreEqual(x.day, 8)
+    Assert(x.day == 8 or x.day == 9) # depends on the time zone
     
     #max
     x = datetime.date.max
@@ -420,18 +420,16 @@ def test_datetime():
     x = datetime.datetime.fromtimestamp(1000000000.0)
     AreEqual(x.year, 2001)
     AreEqual(x.month, 9)
-    AreEqual(x.day, 8)
-    #CodePlex 4862
-    #AreEqual(x.hour, 18)
+    Assert(x.day == 8 or x.day == 9) # depends on the time zone
+    # skip x.hours since it depends on the time zone
     AreEqual(x.minute, 46)
     AreEqual(x.second, 40)
     
     x = datetime.datetime.fromtimestamp(1000000000)
     AreEqual(x.year, 2001)
     AreEqual(x.month, 9)
-    AreEqual(x.day, 8)
-    #CodePlex Work Item 4862
-    #AreEqual(x.hour, 18)
+    Assert(x.day == 8 or x.day == 9) # depends on the time zone
+    # skip x.hours since it depends on the time zone
     AreEqual(x.minute, 46)
     AreEqual(x.second, 40)
     
@@ -446,8 +444,7 @@ def test_datetime():
     AreEqual(x.year, 2001)
     AreEqual(x.month, 9)
     AreEqual(x.day, 9)
-    #CodePlex 4862
-    #AreEqual(x.hour, 1)
+    AreEqual(x.hour, 1)
     AreEqual(x.minute, 46)
     AreEqual(x.second, 40)
     
@@ -1119,7 +1116,7 @@ def test_pickle():
 @skip("silverlight")
 def test_datetime_datetime_pickled_by_cpy():
     import cPickle
-    with open(r"pickles\cp18666.pickle", "rb") as f:
+    with open(r"pickles/cp18666.pickle", "rb") as f:
         expected_dt    = datetime.datetime(2009, 8, 6, 8, 42, 38, 196000)
         pickled_cpy_dt = cPickle.load(f)
         AreEqual(expected_dt, pickled_cpy_dt)

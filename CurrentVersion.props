@@ -3,21 +3,21 @@
   <PropertyGroup>
     <MajorVersion>2</MajorVersion>
     <MinorVersion>7</MinorVersion>
-    <MicroVersion>6</MicroVersion>
+    <MicroVersion>7</MicroVersion>
     <!-- Allowed: alpha,beta,candidate,final -->
-    <ReleaseLevel>alpha</ReleaseLevel>
-    <ReleaseSerial>0</ReleaseSerial>
+    <ReleaseLevel>candidate</ReleaseLevel>
+    <ReleaseSerial>2</ReleaseSerial>
 
     <AssemblyRevision>0</AssemblyRevision>
   </PropertyGroup>
   <PropertyGroup>
     <DlrMajorVersion>1</DlrMajorVersion>
     <DlrMinorVersion>1</DlrMinorVersion>
-    <DlrMicroVersion>0</DlrMicroVersion>
+    <DlrMicroVersion>2</DlrMicroVersion>
     <!-- Allowed: alpha,beta,candidate,final -->
-    <DlrReleaseLevel>final</DlrReleaseLevel>
-    <DlrReleaseSerial>0</DlrReleaseSerial>
+    <DlrReleaseLevel>candidate</DlrReleaseLevel>
+    <DlrReleaseSerial>2</DlrReleaseSerial>
 
-    <DlrAssemblyRevision>21</DlrAssemblyRevision>
+    <DlrAssemblyRevision>22</DlrAssemblyRevision>
   </PropertyGroup>
 </Project>

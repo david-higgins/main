@@ -14,7 +14,7 @@
 #####################################################################################
 
 from iptest.assert_util import *
-skiptest("silverlight")
+skiptest("silverlight", "posix")
 from iptest.file_util import *
 import _random
 from exceptions import IOError
@@ -50,10 +50,7 @@ def test_mkdir_negative():
 
 def test_listdir():
     AssertError(TypeError, nt.listdir, None)
-    if is_cpython: #http://ironpython.codeplex.com/workitem/28207
-        AreEqual(nt.listdir(nt.getcwd()), nt.listdir('.'))
-    else:
-        AreEqual(nt.listdir(''), nt.listdir('.'))
+    AreEqual(nt.listdir(nt.getcwd()), nt.listdir('.'))
 
 # stat,lstat
 def test_stat():
@@ -252,10 +249,10 @@ def test_chmod():
 
 def test_popen():
     # open a pipe just for reading...
-    pipe_modes = [["ping 127.0.0.1", "r"],
-                  ["ping 127.0.0.1"]]
+    pipe_modes = [["ping 127.0.0.1 -n 1", "r"],
+                  ["ping 127.0.0.1 -n 1"]]
     if is_cli:
-        pipe_modes.append(["ping 127.0.0.1", ""])
+        pipe_modes.append(["ping 127.0.0.1 -n 1", ""])
         
     for args in pipe_modes:
         x = nt.popen(*args)
@@ -274,7 +271,7 @@ def test_popen():
     #AreEqual(x.close(), None)
 
     # once w/ default mode
-    AssertError(ValueError, nt.popen, "ping 127.0.0.1", "a")
+    AssertError(ValueError, nt.popen, "ping 127.0.0.1 -n 1", "a")
 
     # popen uses cmd.exe to run stuff -- at least sometimes
     dir_pipe = nt.popen('dir')
@@ -604,7 +601,7 @@ def test_spawnl():
     #sanity check
     #CPython nt has no spawnl function
     pint_cmd = ping_cmd = get_environ_variable("windir") + "\system32\ping.exe"
-    nt.spawnl(nt.P_WAIT, ping_cmd , "ping","127.0.0.1")
+    nt.spawnl(nt.P_WAIT, ping_cmd , "ping","127.0.0.1","-n","1")
     nt.spawnl(nt.P_WAIT, ping_cmd , "ping","/?")
     nt.spawnl(nt.P_WAIT, ping_cmd , "ping")
     
@@ -618,8 +615,7 @@ def test_spawnv():
     #sanity check
     ping_cmd = get_environ_variable("windir") + "\system32\ping"
     nt.spawnv(nt.P_WAIT, ping_cmd , ["ping"])
-    nt.spawnv(nt.P_WAIT, ping_cmd , ["ping","127.0.0.1"])
-    nt.spawnv(nt.P_WAIT, ping_cmd, ["ping", "-n", "5", "-w", "5000", "127.0.0.1"])
+    nt.spawnv(nt.P_WAIT, ping_cmd , ["ping","127.0.0.1","-n","1"])
     
         
 # spawnve tests
@@ -631,7 +627,7 @@ def test_spawnve():
     #simple sanity checks
     nt.spawnve(nt.P_WAIT, ping_cmd, ["ping", "/?"], {})
     nt.spawnve(nt.P_WAIT, ping_cmd, ["ping", "127.0.0.1"], {})
-    nt.spawnve(nt.P_WAIT, ping_cmd, ["ping", "-n", "6", "-w", "1000", "127.0.0.1"], {})
+    nt.spawnve(nt.P_WAIT, ping_cmd, ["ping", "-n", "2", "-w", "1000", "127.0.0.1"], {})
     
     #negative cases
     AssertError(TypeError, nt.spawnve, nt.P_WAIT, ping_cmd , ["ping", "/?"], None)
@@ -658,7 +654,7 @@ def test_waitpid():
     '''
     #sanity check
     ping_cmd = get_environ_variable("windir") + "\system32\ping"
-    pid = nt.spawnv(nt.P_NOWAIT, ping_cmd ,  ["ping", "-n", "5", "-w", "1000", "127.0.0.1"])
+    pid = nt.spawnv(nt.P_NOWAIT, ping_cmd ,  ["ping", "-n", "1", "127.0.0.1"])
     
     new_pid, exit_stat = nt.waitpid(pid, 0)
     
@@ -686,11 +682,8 @@ def test_stat_result():
     AreEqual(object.st_mtime,8)
     AreEqual(object.st_ctime,9)
     
-    if is_cli: #http://ironpython.codeplex.com/WorkItem/View.aspx?WorkItemId=21917
-        AreEqual(str(nt.stat_result(range(12))), "(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)") #CodePlex 8755
-    else:
-        AreEqual(str(nt.stat_result(range(12))), 
-                 "nt.stat_result(st_mode=0, st_ino=1, st_dev=2, st_nlink=3, st_uid=4, st_gid=5, st_size=6, st_atime=7, st_mtime=8, st_ctime=9)") #CodePlex 8755
+    AreEqual(str(nt.stat_result(range(12))),
+             "nt.stat_result(st_mode=0, st_ino=1, st_dev=2, st_nlink=3, st_uid=4, st_gid=5, st_size=6, st_atime=7, st_mtime=8, st_ctime=9)") #CodePlex 8755
     
     #negative tests
     statResult = [0,1,2,3,4,5,6,7,8,]
@@ -806,13 +799,8 @@ def test_stat_result():
     
     #__repr__
     x = nt.stat_result(range(10))
-    if is_cpython:
-        AreEqual(x.__repr__(),
-                 "nt.stat_result(st_mode=0, st_ino=1, st_dev=2, st_nlink=3, st_uid=4, st_gid=5, st_size=6, st_atime=7, st_mtime=8, st_ctime=9)")
-    else:
-        #http://ironpython.codeplex.com/WorkItem/View.aspx?WorkItemId=21917
-        AreEqual(x.__repr__(),
-                 "(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)")
+    AreEqual(x.__repr__(),
+             "nt.stat_result(st_mode=0, st_ino=1, st_dev=2, st_nlink=3, st_uid=4, st_gid=5, st_size=6, st_atime=7, st_mtime=8, st_ctime=9)")
     
     #index get/set
     x = nt.stat_result(range(10))
@@ -975,9 +963,9 @@ def test_open():
 
 def test_system_minimal():
     Assert(hasattr(nt, "system"))
-    AreEqual(nt.system("ping localhost"), 0)
-    AreEqual(nt.system('"ping localhost"'), 0)
-    AreEqual(nt.system('"ping localhost'), 0)
+    AreEqual(nt.system("ping localhost -n 1"), 0)
+    AreEqual(nt.system('"ping localhost -n 1"'), 0)
+    AreEqual(nt.system('"ping localhost -n 1'), 0)
         
     AreEqual(nt.system("ping"), 1)
     
@@ -1027,11 +1015,7 @@ def test_access():
 def test_umask():
     orig = nt.umask(0)
     try:
-       
-        if is_cpython: #http://ironpython.codeplex.com/workitem/28208
-            AssertError(TypeError, nt.umask, 3.14)
-        else:
-            AreEqual(nt.umask(3.14), 0)
+        AssertError(TypeError, nt.umask, 3.14)
 
         for i in [0, 1, 5, int((2**(31))-1)]:
             AreEqual(nt.umask(i), 0)
@@ -1065,6 +1049,7 @@ def test__getfullpathname_neg():
     for bad in [None, 0, 34, -12345L, 3.14, object, test__getfullpathname]:
         AssertError(TypeError, nt._getfullpathname, bad)
 
+@skip("netstandard") # TODO: figure out
 def test_cp15514():
     cmd_variation_list = ['%s -c "print __name__"' % sys.executable,
                           '"%s -c "print __name__""' % sys.executable,
@@ -1120,7 +1105,7 @@ def test_strerror():
     for key, value in test_dict.iteritems():
         AreEqual(nt.strerror(key), value)
 
-
+@skip("netstandard") # TODO: figure out
 def test_popen_cp34837():
     import subprocess
     import os

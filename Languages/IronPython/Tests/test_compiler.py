@@ -17,6 +17,7 @@ from iptest.assert_util import *
 skiptest("silverlight")
 skiptest("win32")
 skiptest("multiple_execute")
+skiptest("netstandard") # no clr.CompileModules in netstandard
 
 import clr
 from System import Array
@@ -134,8 +135,8 @@ def test_package_simple():
 def test_package_subpackage():
     compilePackage("subPackage", { "__init__.py" : "import a\nimport b.c\ndef f(): return a.f() + b.c.f()",
                                    "a.py" : "def f(): return 10",
-                                   "b\\__init__.py" : "def f(): return 'kthxbye'",
-                                   "b\\c.py" : "def f(): return 20"})
+                                   "b/__init__.py" : "def f(): return 'kthxbye'",
+                                   "b/c.py" : "def f(): return 20"})
 
     import subPackage
     AreEqual(subPackage.f(), 30)
@@ -144,8 +145,8 @@ def test_package_subpackage():
 
 def test_package_subpackage_relative_imports():
     compilePackage("subPackage_relative", { "__init__.py" : "from foo import bar",
-                                   "foo\\__init__.py" : "from foo import bar",
-                                   "foo\\foo.py" : "bar = 'BAR'"})
+                                   "foo/__init__.py" : "from foo import bar",
+                                   "foo/foo.py" : "bar = 'BAR'"})
 
     import subPackage_relative
     AreEqual(subPackage_relative.bar, 'BAR')

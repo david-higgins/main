@@ -24,9 +24,9 @@ namespace Microsoft.Scripting.Utils {
     public static class ExceptionUtils {
         public static ArgumentOutOfRangeException MakeArgumentOutOfRangeException(string paramName, object actualValue, string message) {
 #if SILVERLIGHT || WP75 // ArgumentOutOfRangeException ctor overload
-            throw new ArgumentOutOfRangeException(paramName, string.Format("{0} (actual value is '{1}')", message, actualValue));
+            return new ArgumentOutOfRangeException(paramName, string.Format("{0} (actual value is '{1}')", message, actualValue));
 #else
-            throw new ArgumentOutOfRangeException(paramName, actualValue, message);
+            return new ArgumentOutOfRangeException(paramName, actualValue, message);
 #endif
         }
 
@@ -85,12 +85,22 @@ namespace Microsoft.Scripting.Utils {
                 if (!_exceptionData.TryGetValue(e, out data)) {
                     return null;
                 }
-				if ((from f in data where f.Key == key select f).Count() == 0)
-				{
-					return null;
-					throw new ArgumentException("Key " + key.ToString() + " not found\n\n Had:\n" + String.Join("\n", (from ff in data select "\n key = " + ff.Key + "\n val = " + ff.Value).ToArray()));
-				}
-                return data.First(entry => entry.Key == key).Value;
+// our fix, possibly not needed any more, but lets keep for now
+// 				if ((from f in data where f.Key == key select f).Count() == 0)
+// 				{
+// 					return null;
+// 					throw new ArgumentException("Key " + key.ToString() + " not found\n\n Had:\n" + String.Join("\n", (from ff in data select "\n key = " + ff.Key + "\n val = " + ff.Value).ToArray()));
+// 				}
+//                 return data.First(entry => entry.Key == key).Value;
+//
+// new official code
+
+                int index = data.FindIndex(entry => entry.Key == key);
+                if (index >= 0)
+                    return data[index].Value;
+
+                return null;                
+
             }
         }
 

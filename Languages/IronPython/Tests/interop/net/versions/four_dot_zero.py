@@ -29,6 +29,10 @@ if System.Environment.Version.Major<4:
     print "Will not run this test against versions of the CLR earlier than 4.0"
     sys.exit(0)
 
+if is_netstandard:
+    import clr
+    clr.AddReference("System.Threading.Tasks.Parallel")
+
 import System.Threading.Tasks.Parallel as Parallel
 import System.Diagnostics.Contracts.Contract as Contract
 
@@ -150,13 +154,13 @@ def test_file_system_enumerations():
     Only minimal sanity tests should be needed. We already have 
     "for x in IEnumerable:..."-like tests elsewhere.
     '''
-    import nt
-    nt_dir   = nt.listdir(".")
-    nt_dir.sort()
+    import os
+    os_dir   = os.listdir(".")
+    os_dir.sort()
     
     enum_dir = [x[2:] for x in System.IO.Directory.EnumerateFileSystemEntries(".")]
     enum_dir.sort()
-    AreEqual(nt_dir, enum_dir)
+    AreEqual(os_dir, enum_dir)
 
 def test_memory_mapped_files():
     '''

@@ -134,8 +134,8 @@ def test_getattr():
         c.close()
 
     try:
-        import nt
-        nt.unlink(tmpfile)
+        import os
+        os.unlink(tmpfile)
     except:
         pass
             
@@ -2261,7 +2261,7 @@ def test_type_type_is_type():
         
     false_values = [OS]
     if is_cli:
-        false_values += [ System.Boolean(1), System.Int32(3), System.Version(), System.Exception() ]
+        false_values += [ System.Boolean(1), System.Int32(3), System.Version(0, 0), System.Exception() ]
         
     for x in false_values:
         Assert(type(x) is not type)
@@ -3438,11 +3438,8 @@ def test_bad_mro_error_message():
     
     class B(A): pass
     
-    if is_ironpython: #http://ironpython.codeplex.com/workitem/27907
-        AssertErrorWithPartialMessage(TypeError, "A, B", type, "X", (A,B), {})
-    else:
-        AssertErrorWithPartialMessage(TypeError, "Cannot create a consistent method resolution\norder (MRO) for bases", 
-                                      type, "X", (A,B), {})
+    AssertErrorWithPartialMessage(TypeError, "Cannot create a consistent method resolution\norder (MRO) for bases A, B",
+                                  type, "X", (A,B), {})
 
 def test_finalizer():
     """returning the same object from __new__ shouldn't cause it to be finalized"""
@@ -3689,7 +3686,8 @@ def test_cp22832():
         
     Assert("KOldStuff" in dir(KNew))
 
-@skip("silverlight")
+# mono's GC apparently behaves differently...
+@skip("silverlight", "posix")
 def test_cp23564():
     global A
     A = 0

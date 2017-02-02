@@ -202,8 +202,15 @@ namespace IronPython.Modules {
 
             public void extend(object iterable) {
                 array pa = iterable as array;
-                if (pa != null && typecode != pa.typecode) {
-                    throw PythonOps.TypeError("cannot extend with different typecode");
+                if (pa != null) {
+                    if (typecode != pa.typecode) {
+                        throw PythonOps.TypeError("cannot extend with different typecode");
+                    }
+                    int l = pa._data.Length;
+                    for (int i = 0; i < l; i++) {
+                        _data.Append(pa._data.GetData(i));
+                    }
+                    return;
                 }
 
                 string str = iterable as string;
@@ -351,6 +358,7 @@ namespace IronPython.Modules {
                 return res;
             }
 
+            [Python3Warning("array.read() not supported in 3.x; use array.fromfile()")]
             public void read(PythonFile f, int n) {
                 fromfile(f, n);
             }
@@ -576,7 +584,7 @@ namespace IronPython.Modules {
                     DynamicHelpers.GetPythonType(this),
                     PythonOps.MakeTuple(
                         typecode,
-                        ToByteArray().MakeString()
+                        tolist()
                     ),
                     null
                 );
@@ -586,9 +594,9 @@ namespace IronPython.Modules {
                 return new array(typecode, this);
             }
 
-            public array __deepcopy__() {
+            public array __deepcopy__(array arg) {
                 // we only have simple data so this is the same as a copy
-                return __copy__();
+                return arg.__copy__();
             }
 
             public PythonTuple __reduce_ex__(int version) {
@@ -633,6 +641,7 @@ namespace IronPython.Modules {
                 return new string(((ArrayData<char>)_data).Data, 0, _data.Length);
             }
 
+            [Python3Warning("array.write() not supported in 3.x; use array.tofile()")]
             public void write(PythonFile f) {
                 tofile(f);
             }
@@ -876,7 +885,7 @@ namespace IronPython.Modules {
                     if (!(value is T)) {
                         object newVal;
                         if (!Converter.TryConvert(value, typeof(T), out newVal)) {
-                            if (value != null && typeof(T).IsPrimitive && typeof(T) != typeof(char))
+                            if (value != null && typeof(T).GetTypeInfo().IsPrimitive && typeof(T) != typeof(char))
                                 throw PythonOps.OverflowError("couldn't convert {1} to {0}",
                                     DynamicHelpers.GetPythonTypeFromType(typeof(T)).Name,
                                     DynamicHelpers.GetPythonType(value).Name);

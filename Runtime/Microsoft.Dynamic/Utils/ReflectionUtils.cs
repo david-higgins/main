@@ -17,7 +17,7 @@
 using Microsoft.Scripting.Metadata;
 #endif
 
-#if !WIN8
+#if !FEATURE_TYPE_INFO
 using TypeInfo = System.Type;
 #endif
 
@@ -39,7 +39,7 @@ using Microsoft.Scripting.Generation;
 using Microsoft.Scripting.Runtime;
 using Microsoft.Scripting.Utils;
 
-#if WIN8 || WP75
+#if WIN8 || WP75 || NETSTANDARD
 namespace System.Runtime.CompilerServices {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Event)]
     public sealed class SpecialNameAttribute : Attribute {
@@ -96,6 +96,18 @@ namespace System.Reflection {
         public static IEnumerable<MethodInfo> GetRuntimeMethods(this Type type) {
             return type.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
         }
+
+#if !FEATURE_GET_METHOD_INFO
+        public static MethodInfo GetMethodInfo(this Delegate d) {
+            return d.Method;
+        }
+#endif
+
+#if !FEATURE_TYPE_INFO
+        public static InterfaceMapping GetRuntimeInterfaceMap(this Type typeInfo, Type interfaceType) {
+            return typeInfo.GetInterfaceMap(interfaceType);
+        }
+#endif
     }
 }
 #endif
@@ -557,7 +569,7 @@ namespace Microsoft.Scripting.Utils {
         #region Declared Members
 
         public static IEnumerable<ConstructorInfo> GetDeclaredConstructors(this Type type) {
-#if WIN8
+#if FEATURE_TYPE_INFO
             return type.GetTypeInfo().DeclaredConstructors;
 #else
             return type.GetConstructors(BindingFlags.DeclaredOnly | AllMembers);
@@ -571,7 +583,7 @@ namespace Microsoft.Scripting.Utils {
 #endif
 
         public static IEnumerable<MethodInfo> GetDeclaredMethods(this Type type, string name = null) {
-#if WIN8
+#if FEATURE_TYPE_INFO
             if (name == null) {
                 return type.GetTypeInfo().DeclaredMethods;
             } else {
@@ -587,7 +599,7 @@ namespace Microsoft.Scripting.Utils {
         }
 
         public static IEnumerable<PropertyInfo> GetDeclaredProperties(this Type type) {
-#if WIN8
+#if FEATURE_TYPE_INFO
             return type.GetTypeInfo().DeclaredProperties;
 #else
             return type.GetProperties(BindingFlags.DeclaredOnly | AllMembers);
@@ -596,7 +608,7 @@ namespace Microsoft.Scripting.Utils {
 
         public static PropertyInfo GetDeclaredProperty(this Type type, string name) {
             Debug.Assert(name != null);
-#if WIN8
+#if FEATURE_TYPE_INFO
             return type.GetTypeInfo().GetDeclaredProperty(name);
 #else
             return type.GetProperty(name, BindingFlags.DeclaredOnly | AllMembers);
@@ -604,7 +616,7 @@ namespace Microsoft.Scripting.Utils {
         }
 
         public static IEnumerable<EventInfo> GetDeclaredEvents(this Type type) {
-#if WIN8
+#if FEATURE_TYPE_INFO
             return type.GetTypeInfo().DeclaredEvents;
 #else
             return type.GetEvents(BindingFlags.DeclaredOnly | AllMembers);
@@ -613,7 +625,7 @@ namespace Microsoft.Scripting.Utils {
 
         public static EventInfo GetDeclaredEvent(this Type type, string name) {
             Debug.Assert(name != null);
-#if WIN8
+#if FEATURE_TYPE_INFO
             return type.GetTypeInfo().GetDeclaredEvent(name);
 #else
             return type.GetEvent(name, BindingFlags.DeclaredOnly | AllMembers);
@@ -621,7 +633,7 @@ namespace Microsoft.Scripting.Utils {
         }
 
         public static IEnumerable<FieldInfo> GetDeclaredFields(this Type type) {
-#if WIN8
+#if FEATURE_TYPE_INFO
             return type.GetTypeInfo().DeclaredFields;
 #else
             return type.GetFields(BindingFlags.DeclaredOnly | AllMembers);
@@ -630,7 +642,7 @@ namespace Microsoft.Scripting.Utils {
 
         public static FieldInfo GetDeclaredField(this Type type, string name) {
             Debug.Assert(name != null);
-#if WIN8
+#if FEATURE_TYPE_INFO
             return type.GetTypeInfo().GetDeclaredField(name);
 #else
             return type.GetField(name, BindingFlags.DeclaredOnly | AllMembers);
@@ -638,7 +650,7 @@ namespace Microsoft.Scripting.Utils {
         }
 
         public static IEnumerable<TypeInfo> GetDeclaredNestedTypes(this Type type) {
-#if WIN8
+#if FEATURE_TYPE_INFO
             return type.GetTypeInfo().DeclaredNestedTypes;
 #else
             return type.GetNestedTypes(BindingFlags.DeclaredOnly | AllMembers);
@@ -647,7 +659,7 @@ namespace Microsoft.Scripting.Utils {
 
         public static TypeInfo GetDeclaredNestedType(this Type type, string name) {
             Debug.Assert(name != null);
-#if WIN8
+#if FEATURE_TYPE_INFO
             return type.GetTypeInfo().GetDeclaredNestedType(name);
 #else
             return type.GetNestedType(name, BindingFlags.DeclaredOnly | AllMembers);
@@ -764,6 +776,7 @@ namespace Microsoft.Scripting.Utils {
             return type.GetTypeInfo().ImplementedInterfaces;
         }
 
+#if !NETSTANDARD
         public static MethodInfo GetGetMethod(this PropertyInfo propertyInfo, bool nonPublic = false) {
             var accessor = propertyInfo.GetMethod;
             return nonPublic || accessor == null || accessor.IsPublic ? accessor : null;
@@ -802,6 +815,7 @@ namespace Microsoft.Scripting.Utils {
         public static MethodInfo GetMethod(this Type type, string name, BindingFlags bindingFlags) {
             return type.GetMethods(name, bindingFlags).Single();
         }
+#endif
 
         private static IEnumerable<MethodInfo> GetMethods(this Type type, string name, BindingFlags bindingFlags) {
             return type.GetTypeInfo().GetDeclaredMethods(name).WithBindingFlags(bindingFlags);
@@ -812,10 +826,7 @@ namespace Microsoft.Scripting.Utils {
             return builder.CreateTypeInfo().AsType();
         }
 
-        public static MethodInfo GetMethod(this Delegate d) {
-            return ((dynamic)d).Method;
-        }
-
+#if !NETSTANDARD
         public static object GetRawConstantValue(this FieldInfo field) {
             return ((dynamic)field).GetRawConstantValue();
         }
@@ -823,11 +834,13 @@ namespace Microsoft.Scripting.Utils {
         public static int GetMetadataToken(this MemberInfo member) {
             return ((dynamic)member).MetadataToken;
         }
+#endif
 
         public static Module GetModule(this MemberInfo member) {
-            return ((dynamic)member).Module;
+            return member.Module;
         }
 
+#if !NETSTANDARD
         public static Type[] GetGenericArguments(this Type type) {
             return type.GetTypeInfo().GenericTypeArguments;
         }
@@ -835,6 +848,7 @@ namespace Microsoft.Scripting.Utils {
         public static bool IsAssignableFrom(this Type type, Type other) {
             return type.GetTypeInfo().IsAssignableFrom(other.GetTypeInfo());
         }
+#endif
 
         public static Type[] GetGenericParameterConstraints(this Type type) {
             return type.GetTypeInfo().GetGenericParameterConstraints();
@@ -844,9 +858,11 @@ namespace Microsoft.Scripting.Utils {
             return type.GetTypeInfo().IsSubclassOf(other);
         }
 
+#if !NETSTANDARD
         public static IEnumerable<Type> GetInterfaces(this Type type) {
             return type.GetTypeInfo().ImplementedInterfaces;
         }
+#endif
 
         public static Type[] GetRequiredCustomModifiers(this ParameterInfo parameter) {
             return EmptyTypes;
@@ -871,6 +887,7 @@ namespace Microsoft.Scripting.Utils {
             return null;
         }
 
+#if !NETSTANDARD
         public static IEnumerable<MemberInfo> GetDefaultMembers(this Type type) {
             string defaultMemberName = type.GetDefaultMemberName();
             if (defaultMemberName != null) {
@@ -879,6 +896,7 @@ namespace Microsoft.Scripting.Utils {
 
             return Enumerable.Empty<MemberInfo>();
         }
+#endif
 #else
 
         public static IEnumerable<Module> GetModules(this Assembly assembly) {
@@ -893,10 +911,6 @@ namespace Microsoft.Scripting.Utils {
             return Type.GetTypeCode(type);
         }
 
-        public static MethodInfo GetMethod(this Delegate d) {
-            return d.Method;
-        }
-        
         public static int GetMetadataToken(this MemberInfo member) {
             return member.MetadataToken;
         }
@@ -925,6 +939,10 @@ namespace Microsoft.Scripting.Utils {
             return Attribute.GetCustomAttributes(member, typeof(T), inherit).Cast<T>();
         }
 #endif
+
+        public static MethodInfo GetMethod(this Delegate d) {
+            return d.GetMethodInfo();
+        }
 
         public static bool ContainsGenericParameters(this Type type) {
             return type.GetTypeInfo().ContainsGenericParameters;
@@ -1027,7 +1045,7 @@ namespace Microsoft.Scripting.Utils {
                 result.Append(' ');
             }
 
-#if FEATURE_REFEMIT
+#if FEATURE_REFEMIT && !NETSTANDARD
             MethodBuilder builder = method as MethodBuilder;
             if (builder != null) {
                 result.Append(builder.Signature);
@@ -1170,7 +1188,7 @@ namespace Microsoft.Scripting.Utils {
         public static Delegate CreateDelegate(this MethodInfo methodInfo, Type delegateType, object target) {
             return Delegate.CreateDelegate(delegateType, target, methodInfo);
         }
-#elif !WIN8
+#elif !WIN8 && !NETSTANDARD
         /// <summary>
         /// Creates an open delegate for the given (dynamic)method.
         /// </summary>
@@ -1449,7 +1467,7 @@ namespace Microsoft.Scripting.Utils {
 
                 foreach (var type in moduleTypes) {
                     if (type != null) {
-                        yield return type;
+                        yield return type.GetTypeInfo();
                     }
                 }
             }
@@ -1468,7 +1486,7 @@ namespace Microsoft.Scripting.Utils {
 #if WIN8
                 return assembly.ExportedTypes.Select(t => t.GetTypeInfo());
 #else
-                return assembly.GetExportedTypes();
+                return assembly.GetExportedTypes().Select(t => t.GetTypeInfo());
 #endif
             } catch (NotSupportedException) {
                 // GetExportedTypes does not work with dynamic assemblies
@@ -1485,11 +1503,8 @@ namespace Microsoft.Scripting.Utils {
         #region Type Builder
 #if FEATURE_REFEMIT
 
-#if WIN8 // TODO: what is ReservedMask?
-        private const MethodAttributes MethodAttributesToEraseInOveride = MethodAttributes.Abstract | (MethodAttributes)0xD000;
-#else
-        private const MethodAttributes MethodAttributesToEraseInOveride = MethodAttributes.Abstract | MethodAttributes.ReservedMask;
-#endif
+        private const MethodAttributes MethodAttributesReservedMask = (MethodAttributes)0xD000; // MethodAttributes.ReservedMask
+        private const MethodAttributes MethodAttributesToEraseInOveride = MethodAttributes.Abstract | MethodAttributesReservedMask;
 
         public static MethodBuilder DefineMethodOverride(TypeBuilder tb, MethodAttributes extra, MethodInfo decl) {
             MethodAttributes finalAttrs = (decl.Attributes & ~MethodAttributesToEraseInOveride) | extra;

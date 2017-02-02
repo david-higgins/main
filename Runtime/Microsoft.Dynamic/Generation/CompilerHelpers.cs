@@ -57,6 +57,7 @@ namespace Microsoft.Scripting.Generation {
             if (type.IsByRef) type = type.GetElementType();
             if (type.IsEnum()) return Activator.CreateInstance(type);
 
+            const TypeCode TypeCodeDbNull = (TypeCode)2; // TypeCode.DBNull
             switch (type.GetTypeCode()) {
                 default:
                 case TypeCode.Object:
@@ -72,7 +73,7 @@ namespace Microsoft.Scripting.Generation {
                         throw Error.CantCreateDefaultTypeFor(type);
                     }
                 case TypeCode.Empty:
-                case TypeCode.DBNull:
+                case TypeCodeDbNull:
                 case TypeCode.String:
                     return null;
 
@@ -215,21 +216,20 @@ namespace Microsoft.Scripting.Generation {
                     }
                 }
             }
-            return method;
 #else
             // maybe we can get it from an interface on the type this
             // method came from...
             foreach (Type iface in targetType.GetImplementedInterfaces()) {
-                InterfaceMapping mapping = targetType.GetInterfaceMap(iface);
+                InterfaceMapping mapping = targetType.GetTypeInfo().GetRuntimeInterfaceMap(iface);
                 for (int i = 0; i < mapping.TargetMethods.Length; i++) {
                     MethodInfo targetMethod = mapping.TargetMethods[i];
-                    if (targetMethod != null && targetMethod.MethodHandle == method.MethodHandle) {
+                    if (targetMethod != null && targetMethod.MetadataToken == method.MetadataToken && targetMethod.Module == method.Module) {
                         return mapping.InterfaceMethods[i];
                     }
                 }
             }
-            return method;
 #endif
+            return method;
         }
 
         /// <summary>
@@ -304,6 +304,7 @@ namespace Microsoft.Scripting.Generation {
             }
 
             switch (self.MemberType) {
+#if !NETSTANDARD
                 case MemberTypes.Field:
                     return ((FieldInfo)self).FieldHandle.Equals(((FieldInfo)other).FieldHandle);
                 case MemberTypes.Method:
@@ -315,6 +316,7 @@ namespace Microsoft.Scripting.Generation {
                     return ((Type)self).TypeHandle.Equals(((Type)other).TypeHandle);
                 case MemberTypes.Event:
                 case MemberTypes.Property:
+#endif
                 default:
                     return
                         ((MemberInfo)self).Module == ((MemberInfo)other).Module &&
@@ -378,7 +380,7 @@ namespace Microsoft.Scripting.Generation {
             }
 
             if (t.IsValueType()
-#if !SILVERLIGHT && !WIN8 && !WP75
+#if !SILVERLIGHT && !WIN8 && !WP75 && !NETSTANDARD
                 && t != typeof(ArgIterator)
 #endif
 ) {
@@ -519,7 +521,7 @@ namespace Microsoft.Scripting.Generation {
             ContractUtils.RequiresNotNull(toType, "toType");
 
             // try available type conversions...
-            foreach (TypeConverterAttribute tca in toType.GetCustomAttributes(typeof(TypeConverterAttribute), true)) {
+            foreach (TypeConverterAttribute tca in toType.GetTypeInfo().GetCustomAttributes(typeof(TypeConverterAttribute), true)) {
                 try {
                     converter = Activator.CreateInstance(Type.GetType(tca.ConverterTypeName)) as TypeConverter;
                 } catch (Exception) {
@@ -641,7 +643,7 @@ namespace Microsoft.Scripting.Generation {
             return (T)(object)LightCompile((LambdaExpression)lambda, compilationThreshold);
         }
 
-#if FEATURE_REFEMIT
+#if FEATURE_REFEMIT && !NETSTANDARD
         /// <summary>
         /// Compiles the lambda into a method definition.
         /// </summary>
@@ -688,7 +690,7 @@ namespace Microsoft.Scripting.Generation {
             return lambda.Compile();
         }
 
-#if FEATURE_REFEMIT
+#if FEATURE_PDBEMIT && FEATURE_REFEMIT
         /// <summary>
         /// Compiles the LambdaExpression, emitting it into a new type, and
         /// optionally making it debuggable.
@@ -701,6 +703,7 @@ namespace Microsoft.Scripting.Generation {
         /// <param name="emitDebugSymbols">True if debug symbols (PDBs) are emitted by the <paramref name="debugInfoGenerator"/>.</param>
         /// <returns>the compiled delegate</returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011:ConsiderPassingBaseTypesAsParameters")]
+
         public static T CompileToMethod<T>(Expression<T> lambda, DebugInfoGenerator debugInfoGenerator, bool emitDebugSymbols) {
             return (T)(object)CompileToMethod((LambdaExpression)lambda, debugInfoGenerator, emitDebugSymbols);
         }

@@ -48,6 +48,14 @@ def test_none():
     AssertError(TypeError, #"cannot concatenate 'str' and 'NoneType' objects", #http://ironpython.codeplex.com/WorkItem/View.aspx?WorkItemId=21947
                            lambda: '' + None)
 
+def test_constructor():
+    AreEqual('', str())
+    AreEqual('None', str(None))
+    
+    # https://github.com/IronLanguages/main/issues/1108
+    AreEqual('ä', str('ä')) # StringOps.__new__(..., string)
+    AreEqual('ä', str('ä'.Chars[0])) # StringOps.__new__(..., char)
+                           
 def test_add_mul():
     AssertError(TypeError, lambda: "a" + 3)
     AssertError(TypeError, lambda: 3 + "a")
@@ -61,8 +69,8 @@ def test_add_mul():
     
     if is_cli:
         from System.IO import Path
-        AreEqual("foo\\", "foo" + Path.DirectorySeparatorChar)
-        AreEqual("\\\\", Path.DirectorySeparatorChar + '\\')
+        AreEqual("foo" + os.sep, "foo" + Path.DirectorySeparatorChar)
+        AreEqual(os.sep + os.sep, Path.DirectorySeparatorChar + os.sep)
 
     # multiply
     AreEqual("aaaa", "a" * 4L)

@@ -1,7 +1,4 @@
 import sys
-
-sys.path.append(r'C:\Users\acearl\Code\IronLanguagesMain\External.LCA_RESTRICTED\Languages\IronPython\27\Lib')
-
 import os
 import marshal
 import imp
@@ -28,9 +25,6 @@ import StringIO
 from traceback import extract_tb, extract_stack, print_tb
 raise_src = 'def do_raise(): raise TypeError\n'
 
-# so we only run testAFakeZlib once if this test is run repeatedly
-# which happens when we look for ref leaks
-test_imported = False
 
 if sys.platform != 'cli':
     def make_pyc(co, mtime):
@@ -481,19 +475,7 @@ class BadFileZipImportTestCase(unittest.TestCase):
             zipimport._zip_directory_cache.clear()
 
 
-def cleanup():
-    # this is necessary if test is run repeated (like when finding leaks)
-    global test_imported
-    if test_imported:
-        zipimport._zip_directory_cache.clear()
-        if hasattr(UncompressedZipImportTestCase, 'testAFakeZlib'):
-            delattr(UncompressedZipImportTestCase, 'testAFakeZlib')
-        if hasattr(CompressedZipImportTestCase, 'testAFakeZlib'):
-            delattr(CompressedZipImportTestCase, 'testAFakeZlib')
-    test_imported = True
-
 def test_main():
-    cleanup()
     try:
         test_support.run_unittest(
               UncompressedZipImportTestCase,

@@ -538,6 +538,7 @@ namespace IronPython.Runtime.Exceptions {
 
             private const int EACCES = 13;
             private const int ENOENT = 2;
+            private const int EPIPE = 32;
 
             [PythonHidden]
             protected internal override void InitializeFromClr(System.Exception/*!*/ exception) {
@@ -564,8 +565,12 @@ namespace IronPython.Runtime.Exceptions {
                     try {
                         uint hr = (uint)GetHRForException(exception);
                         if ((hr & 0xffff0000U) == 0x80070000U) {
-                            // win32 error code, get the real error code...
-                            __init__(hr & 0xffff, exception.Message);
+                            if ((hr & 0xffff) == _WindowsError.ERROR_BROKEN_PIPE) {
+                                __init__(EPIPE, exception.Message);
+                            } else {
+                                // win32 error code, get the real error code...
+                                __init__(hr & 0xffff, exception.Message);
+                            }
                             return;
                         }
                     } catch (MethodAccessException) {
@@ -1049,11 +1054,16 @@ for k, v in toError.iteritems():
                 pyExcep = new BaseException(TypeError);
             } else if (clrException is Win32Exception) {
                 Win32Exception win32 = (Win32Exception)clrException;
+#if NETSTANDARD
+                int errorCode = win32.HResult;
+#else
+                int errorCode = win32.ErrorCode;
+#endif
                 pyExcep = new _WindowsError();
-                if ((win32.ErrorCode & 0x80070000) == 0x80070000) {
-                    pyExcep.__init__(win32.ErrorCode & 0xffff, win32.Message);
+                if ((errorCode & 0x80070000) == 0x80070000) {
+                    pyExcep.__init__(errorCode & 0xffff, win32.Message);
                 } else {
-                    pyExcep.__init__(win32.ErrorCode, win32.Message);
+                    pyExcep.__init__(errorCode, win32.Message);
                 }
                 return pyExcep;
             } else {
@@ -1282,7 +1292,7 @@ for k, v in toError.iteritems():
 
             // merge .NET frames w/ any dynamic frames that we have
             try {
-                StackTrace outermostTrace = new StackTrace(e);
+                StackTrace outermostTrace = new StackTrace(e, false);
                 IList<StackTrace> otherTraces = ExceptionHelpers.GetExceptionStackTraces(e) ?? new List<StackTrace>();
                 List<StackFrame> clrFrames = new List<StackFrame>();
                 

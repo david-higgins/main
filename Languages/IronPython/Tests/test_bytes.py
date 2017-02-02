@@ -356,10 +356,10 @@ def test_partition():
         
         x = testType(b'abc')
         one, two, three = x.partition(b'd')
-        if is_ironpython or testType==str: #http://ironpython.codeplex.com/workitem/27906
-            AreEqual(id(one), id(x))
+        if testType == bytearray:
+            Assert(id(one) != id(x))
         else:
-            Assert(id(one)!=id(x))
+            AreEqual(id(one), id(x))
     
     one, two, three = b''.partition(b'abc')
     AreEqual(id(one), id(two))
@@ -506,10 +506,10 @@ def test_rpartition():
         
         x = testType(b'abc')
         one, two, three = x.rpartition(b'd')        
-        if is_ironpython or testType==str: #http://ironpython.codeplex.com/workitem/27906
-            AreEqual(id(three), id(x))
-        else:
+        if testType == bytearray:
             Assert(id(three) != id(x))
+        else:
+            AreEqual(id(three), id(x))
         
         b = testType(b'mississippi')
         AreEqual(b.rpartition(b'i'), (b'mississipp', b'i', b''))
@@ -840,11 +840,6 @@ def test_add_mul():
     
         class mylong(long): pass
         
-        if is_cli:
-            from System.IO import Path
-            AreEqual("foo\\", "foo" + Path.DirectorySeparatorChar)
-            AreEqual("\\\\", Path.DirectorySeparatorChar + '\\')
-    
         # multiply
         AreEqual("aaaa", "a" * 4L)
         AreEqual("aaaa", "a" * mylong(4L))
@@ -1198,10 +1193,7 @@ def test_bytearray():
     AssertError(MemoryError, f)
     
     def f(): x[0:1] = sys.maxint+1
-    if is_cpython: #http://ironpython.codeplex.com/workitem/28210
-        AssertError(OverflowError, f)   
-    else:
-        AssertError(TypeError, f)    
+    AssertError(TypeError, f)
         
     for setval in [b'bar', bytearray(b'bar'), [b'b', b'a', b'r'], (b'b', b'a', b'r'), (98, b'a', b'r'), (Indexable(98), b'a', b'r'), (IndexableOC(98), b'a', b'r')]:
         x = bytearray(b'abc')

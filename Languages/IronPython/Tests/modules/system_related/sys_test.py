@@ -192,8 +192,9 @@ def test_getframe():
     # verify thread safety of sys.settrace
     import thread
     import time
-    global done
+    global done, failed
     done = 0
+    failed = False
     lock = thread.allocate_lock()
     def starter(events):
         def tracer(*args):
@@ -204,13 +205,16 @@ def test_getframe():
         def f3(): time.sleep(.5)
         
         def test_thread():
-            global done
-            sys.settrace(tracer)
-            f1()
-            sys.settrace(None)
-            f2()
-            sys.settrace(tracer)
-            f3()
+            global done, failed
+            try:
+                sys.settrace(tracer)
+                f1()
+                sys.settrace(None)
+                f2()
+                sys.settrace(tracer)
+                f3()
+            except:
+                failed = True
             with lock: done += 1
             
         thread.start_new_thread(test_thread, ())
@@ -226,6 +230,8 @@ def test_getframe():
     for i in xrange(1, 10):
         AreEqual(lists[i-1], lists[i])
 
+    Assert(not failed)
+
     # verify we report <module> for top-level code
     frame = sys._getframe()
     outer_frame = frame.f_back
@@ -240,6 +246,7 @@ def test_api_version():
     # api_version
     AreEqual(sys.api_version, 0)
 
+@skip("netstandard") # IRuntimeVariables
 @skip("silverlight")
 def test_settrace():
     """TODO: now that sys.settrace has been implemented this test case needs to be fully revisited"""
@@ -315,20 +322,46 @@ print final"""
             Assert('-> print final\n' in out)
             Assert('(Pdb) ' in out)
         finally:
-            nt.unlink('temp.py')
+            os.unlink('temp.py')
 
-
+@skip("netstandard") # IRuntimeVariables
+def test_call_tracing():
+    def f(i):
+        return i * 2
+    def g():
+        pass
+        
+    # outside of a traceback
+    AreEqual(10, sys.call_tracing(f, (5, )))
+    
+    # inside of a traceback
+    log = []
+    def thandler(frm, evt, pl):
+        if evt == 'call':
+            log.append(frm.f_code.co_name)
+            if log[-1] == 'g':
+                sys.call_tracing(f, (5, ))
+        return thandler
+        
+    sys.settrace(thandler)
+    g()
+    sys.settrace(None)
+    
+    AreEqual(log, ['g', 'f'])
+            
 @skip("win32")
 def test_getrefcount():
     # getrefcount
     Assert(hasattr(sys, 'getrefcount'))
 
+@skip("netstandard") # TODO
 @skip("win32 silverlight")
 def test_version():
     import re
     # 2.7.5 (IronPython 2.7.5 (2.7.5.0) on .NET 4.0.30319.18444 (32-bit))
     # 2.7.6a0 (IronPython 2.7.6a0 DEBUG (2.7.6.0) on .NET 4.0.30319.18444 (32-bit))
-    regex = "^\d\.\d\.\d((RC\d+ )|(a\d+ )|(b\d+ )|( ))\(IronPython \d\.\d(\.\d)?((RC\d+ )|(a\d+ )|(b\d+ )|( ))?((DEBUG )|()|(\d?))\(\d\.\d\.\d{1,8}\.\d{1,8}\) on \.NET \d(\.\d{1,5}){3} \(32-bit\)\)$"
+    # 2.7.6 (IronPython 2.7.6.3 (2.7.6.3) on .NET 4.0.30319.42000 (32-bit))
+    regex = "^\d\.\d\.\d((RC\d+ )|(a\d+ )|(b\d+ )|( ))\(IronPython \d\.\d(\.\d)?(\.\d)?((RC\d+ )|(a\d+ )|(b\d+ )|( ))?((DEBUG )|()|(\d?))\(\d\.\d\.\d{1,8}\.\d{1,8}\) on ((\.NET)|(Mono)) \d(\.\d{1,5}){3} \(((32)|(64))-bit\)\)$"
     Assert(re.match(regex, sys.version, re.IGNORECASE) != None)
 
 def test_winver():
@@ -352,6 +385,7 @@ def test_getsizeof():
     else:
         AreEqual(sys.getsizeof(1), sys.getsizeof(1.0))
 
+@skip("netstandard") # IRuntimeVariables
 @skip("silverlight")
 def test_gettrace():
     '''TODO: revisit'''
@@ -419,53 +453,14 @@ f()
         import cp24381
     finally:
         sys.settrace(orig_sys_trace_func)
-        nt.unlink(cp24381_file_name)
+        os.unlink(cp24381_file_name)
 
     AreEqual(CP24381_MESSAGES,
              ['call', None, 'line', None, 'line', None, 'line', None, 'line', 
               None, 'line', None, 'call', None, 'line', None, 'return', None, 
               'return', None])
 
-def test_cp30129():
-    frames = []
-    def f(*args):
-        if args[1] == 'call':
-            frames.append(args[0])
-            if len(frames) == 3:
-                res.append('setting' + str(frames[1].f_lineno))
-                frames[1].f_lineno = 450
-        return f
-    
-    
-    import sys
-    sys.settrace(f)
-    
-    res = []
-    def a():
-        res.append('foo')
-        res.append('bar')
-        res.append('baz')
-    
-    def b():
-        a()
-        res.append('x')
-        res.append('y')
-        res.append('z')
-    
-    def c():
-        b()
-        res.append('hello')
-        res.append('goodbye')
-        res.append('see ya')
-    
-    
-    c()
-    
-    AreEqual(res, ['setting450', 'foo', 'bar', 'baz', 'x', 'y', 'z', 'hello', 'goodbye', 'see ya'])
-    
-    sys.settrace(None)
-    
-
+@skip("netstandard") # IRuntimeVariables
 def test_cp30130():
     def f(frame, event, arg):
         if event == 'exception':
@@ -493,6 +488,15 @@ def test_cp30130():
     
     sys.settrace(None)
 
+def test_getrefcount():
+    import warnings
+    with warnings.catch_warnings(record = True) as w:
+        count = sys.getrefcount(None)
+        
+    AreNotEqual(0, count)
+    Assert(w)
+    Assert('dummy result' in str(w[0].message))
+    
 #--MAIN------------------------------------------------------------------------    
 
 testDelGetFrame = "Test_GetFrame" in sys.argv
@@ -504,7 +508,7 @@ if testDelGetFrame:
 else:
     run_test(__name__)
     # this is a destructive test, run it in separate instance of IronPython
-    if not is_silverlight and sys.platform!="win32":
+    if is_cli and not is_netstandard: # TODO: figure out
         from iptest.process_util import launch_ironpython_changing_extensions
         AreEqual(0, launch_ironpython_changing_extensions(__file__, ["-X:FullFrames"], [], ("Test_GetFrame",)))
     elif sys.platform == "win32":

@@ -658,6 +658,7 @@ namespace IronPython.Compiler {
 
                         return new IncompleteStringErrorToken(Resources.EofInString, incompleteContents);
                     } else if ((eol_size = ReadEolnOpt(ch)) > 0) {
+                        _newLineLocations.Add(CurrentIndex);
 
                         // skip \<eoln> unless followed by EOF:
                         if (Peek() == EOF) {
@@ -1539,7 +1540,7 @@ namespace IronPython.Compiler {
             // and we have the magic ending as well...
             if (StringOps.TryGetEncoding(encName, out enc)) {
 #if FEATURE_ENCODING
-                enc.DecoderFallback = new NonStrictDecoderFallback();
+                StringOps.SetDecoderFallback(enc, new NonStrictDecoderFallback());
 #endif
                 return true;
             }

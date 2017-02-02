@@ -14,6 +14,7 @@
 #####################################################################################
 
 from iptest.assert_util import *
+skiptest("netstandard") # ctypes is not implemented
 import ctypes
 import ctypes.wintypes
 
@@ -26,12 +27,23 @@ def test_cp34892():
         # there should be no exception of any kind
         Fail("Unexpected exception: %s" % ex)
 
+@skip("posix")
 def test_cp35326():
     GetStdHandle = ctypes.windll.kernel32.GetStdHandle
     GetStdHandle.argtypes = [ ctypes.wintypes.DWORD, ]
     GetStdHandle.restype = ctypes.wintypes.HANDLE
     try:
         GetStdHandle(-11)
+    except Exception as ex:
+        Fail("Unexpected exception: %s" % ex)
+
+@skip("posix")
+def test_gh951():
+    from ctypes import *
+    try:
+        res = cast(windll.kernel32.GetCurrentProcess, c_void_p)
+        if not isinstance(res, ctypes.c_void_p):
+            Fail("c_void_p expected in test_cfuncptr")
     except Exception as ex:
         Fail("Unexpected exception: %s" % ex)
 

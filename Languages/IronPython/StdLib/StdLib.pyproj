@@ -204,6 +204,7 @@
     <Content Include="$(StdLibPath)\_LWPCookieJar.py" />
     <Content Include="$(StdLibPath)\_MozillaCookieJar.py" />
     <Content Include="$(StdLibPath)\_pyio.py" />
+    <Content Include="$(StdLibPath)\_osx_support.py" />
     <Content Include="$(StdLibPath)\_strptime.py" />
     <Content Include="$(StdLibPath)\_threading_local.py" />
     <Content Include="$(StdLibPath)\_weakrefset.py" />
@@ -377,6 +378,7 @@
     <Content Include="$(StdLibPath)\encodings\utf_16_be.py" />
     <Content Include="$(StdLibPath)\encodings\utf_16_le.py" />
     <Content Include="$(StdLibPath)\encodings\utf_32.py" />
+    <Content Include="$(StdLibPath)\encodings\utf_32_be.py" />
     <Content Include="$(StdLibPath)\encodings\utf_32_le.py" />
     <Content Include="$(StdLibPath)\encodings\utf_7.py" />
     <Content Include="$(StdLibPath)\encodings\utf_8.py" />
@@ -405,6 +407,7 @@
     <Content Include="$(StdLibPath)\lib2to3\__init__.py" />
     <Content Include="$(StdLibPath)\lib2to3\__main__.py" />
     <Content Include="$(StdLibPath)\lib2to3\fixes\fix_apply.py" />
+    <Content Include="$(StdLibPath)\lib2to3\fixes\fix_asserts.py" />
     <Content Include="$(StdLibPath)\lib2to3\fixes\fix_basestring.py" />
     <Content Include="$(StdLibPath)\lib2to3\fixes\fix_buffer.py" />
     <Content Include="$(StdLibPath)\lib2to3\fixes\fix_callable.py" />
@@ -516,8 +519,8 @@
     <Content Include="$(StdLibPath)\xml\sax\__init__.py" />
     <Content Include="$(StdLibPath)\site-packages\README.txt" />
     <!-- End Generated Project Items -->
-    <Content Include="$(StdLibPath)\ensurepip\_bundled\pip-1.5.6-py2.py3-none-any.whl" />
-    <Content Include="$(StdLibPath)\ensurepip\_bundled\setuptools-3.6-py2.py3-none-any.whl" />
+    <Content Include="$(StdLibPath)\ensurepip\_bundled\pip-8.1.1-py2.py3-none-any.whl" />
+    <Content Include="$(StdLibPath)\ensurepip\_bundled\setuptools-20.10.1-py2.py3-none-any.whl" />
     <Content Include="$(StdLibPath)\multiprocessing\connection.py" />
     <Content Include="$(StdLibPath)\multiprocessing\forking.py" />
     <Content Include="$(StdLibPath)\multiprocessing\heap.py" />

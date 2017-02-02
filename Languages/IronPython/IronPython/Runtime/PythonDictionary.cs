@@ -28,7 +28,7 @@ using IronPython.Runtime.Types;
 
 namespace IronPython.Runtime {
 
-    [PythonType("dict"), Serializable, DebuggerTypeProxy(typeof(PythonDictionary.DebugProxy)), DebuggerDisplay("dict, {Count} items")]
+    [PythonType("dict"), Serializable, DebuggerTypeProxy(typeof(PythonDictionary.DebugProxy)), DebuggerDisplay("Count = {Count}")]
     public class PythonDictionary : IDictionary<object, object>, IDictionary, 
 #if CLR2
         IValueEquality,
@@ -330,6 +330,7 @@ namespace IronPython.Runtime {
             _storage.Clear(ref _storage);
         }
 
+        [Python3Warning("dict.has_key() not supported in 3.x; use the in operator")]
         public bool has_key(object key) {
             return DictionaryOps.has_key(this, key);
         }

@@ -57,11 +57,7 @@ def test_array___copy__():
     y = x.__copy__()
     Assert(id(x) != id(y), "copy should copy")
     
-    if is_cli or is_silverlight:
-        #CodePlex 19200
-        y = x.__deepcopy__()
-    else:
-        y = x.__deepcopy__(x)
+    y = x.__deepcopy__(x)
     Assert(id(x) != id(y), "copy should copy")
 
 def test_array___deepcopy__():
@@ -241,28 +237,15 @@ def test_array___reduce__():
     TODO: revisit
     '''
     x = array.array('i', [1,2,3])
-    if is_cpython: #http://ironpython.codeplex.com/workitem/28211
-        AreEqual(repr(x.__reduce__()), 
-                 "(<type 'array.array'>, ('i', [1, 2, 3]), None)")
-    else:
-        AreEqual(repr(x.__reduce__()), 
-                 "(<type 'array.array'>, ('i', '\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'), None)")
+    AreEqual(repr(x.__reduce__()), "(<type 'array.array'>, ('i', [1, 2, 3]), None)")
 
 def test_array___reduce_ex__():
     '''
     TODO: revisit
     '''
     x = array.array('i', [1,2,3])
-    if is_cpython: #http://ironpython.codeplex.com/workitem/28211
-        AreEqual(repr(x.__reduce_ex__(1)), 
-                 "(<type 'array.array'>, ('i', [1, 2, 3]), None)")
-        AreEqual(repr(x.__reduce_ex__()), 
-                 "(<type 'array.array'>, ('i', [1, 2, 3]), None)")
-    else:
-        AreEqual(repr(x.__reduce_ex__(1)), 
-                 "(<type 'array.array'>, ('i', '\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'), None)")
-        AreEqual(repr(x.__reduce_ex__()), 
-                 "(<type 'array.array'>, ('i', '\\x01\\x00\\x00\\x00\\x02\\x00\\x00\\x00\\x03\\x00\\x00\\x00'), None)")
+    AreEqual(repr(x.__reduce_ex__(1)), "(<type 'array.array'>, ('i', [1, 2, 3]), None)")
+    AreEqual(repr(x.__reduce_ex__()), "(<type 'array.array'>, ('i', [1, 2, 3]), None)")
 
 def test_array___repr__():
     '''
@@ -496,6 +479,21 @@ def test_cp9350():
         a = array.array('B', [1]) * i
         AreEqual(a, array.array('B', [1]*2**8))
 
+def test_gh870():
+    string_types = ['c', 'b', 'B', 'u']
+    number_types = ['h', 'H', 'i', 'I', 'I', 'l', 'L']
+
+    for typecode in string_types:
+        a = array.array(typecode, 'a')
+        a += a
+        a.extend(a)
+        AreEqual(a, 4*array.array(typecode, 'a'))
+
+    for typecode in number_types:
+        a = array.array(typecode, [1])
+        a += a
+        a.extend(a)
+        AreEqual(a, 4*array.array(typecode, [1]))
 
 def test_coverage():
     '''
@@ -514,8 +512,9 @@ def test_coverage():
     #--Negative
     AssertError(OverflowError, lambda: 4567206470L*a)
     AssertError(OverflowError, lambda: a*4567206470L)
-    AssertError(MemoryError,   lambda: 2147483646L*a)
-    AssertError(MemoryError,   lambda: a*2147483646L)
+    if not is_posix: # these do not fail on Mono
+        AssertError(MemoryError,   lambda: 2147483646L*a)
+        AssertError(MemoryError,   lambda: a*2147483646L)
     
     #--Positive
     a = array.array('b', 'abc')

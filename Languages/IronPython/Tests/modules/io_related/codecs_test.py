@@ -378,11 +378,8 @@ def test_utf_8_encode():
 def test_charbuffer_encode():
     '''
     '''
-    #function takes one parameter, not 0
     if is_cli:
-        #http://ironpython.codeplex.com/WorkItem/View.aspx?WorkItemId=4563
-        #AssertError(NotImplementedError, codecs.charbuffer_encode, "abc")
-        AssertError(NotImplementedError, codecs.charbuffer_encode)
+        AssertError(NotImplementedError, codecs.charbuffer_encode, "abc")
 
 def test_charmap_encode():
     #Sanity
@@ -408,6 +405,7 @@ def test_charmap_encode():
 def test_mbcs_decode():
     '''
     '''
+    if is_netstandard and is_posix: return # TODO: figure out
     for mode in ['strict', 'replace', 'ignore', 'badmodethatdoesnotexist']:
         AreEqual(codecs.mbcs_decode('foo', mode), ('foo', 3))
         cpyres = u'\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\u20ac\x81\u201a\u0192\u201e\u2026\u2020\u2021\u02c6\u2030\u0160\u2039\u0152\x8d\u017d\x8f\x90\u2018\u2019\u201c\u201d\u2022\u2013\u2014\u02dc\u2122\u0161\u203a\u0153\x9d\u017e\u0178\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff'
@@ -422,6 +420,7 @@ def test_mbcs_decode():
 def test_mbcs_encode():
     '''
     '''
+    if is_netstandard and is_posix: return # TODO: figure out
     for mode in ['strict', 'replace', 'ignore', 'badmodethatdoesnotexist']:
         AreEqual(codecs.mbcs_encode('foo', mode), ('foo', 3))
         uall = u''.join([unichr(i) for i in xrange(256)])
@@ -436,26 +435,20 @@ def test_mbcs_encode():
 def test_readbuffer_encode():
     '''
     '''
-    #http://ironpython.codeplex.com/WorkItem/View.aspx?WorkItemId=4563
     if is_cli:
-        #AssertError(NotImplementedError, codecs.readbuffer_encode, "abc")
-        AssertError(NotImplementedError, codecs.readbuffer_encode)
+        AssertError(NotImplementedError, codecs.readbuffer_encode, "abc")
 
 def test_unicode_escape_decode():
     '''
     '''
-    #http://ironpython.codeplex.com/WorkItem/View.aspx?WorkItemId=4563
     if is_cli:
-        #AssertError(NotImplementedError, codecs.unicode_escape_decode, "abc")
-        AssertError(NotImplementedError, codecs.unicode_escape_decode)
+        AssertError(NotImplementedError, codecs.unicode_escape_decode, "abc")
 
 def test_unicode_escape_encode():
     '''
     '''
-    #http://ironpython.codeplex.com/WorkItem/View.aspx?WorkItemId=4563
     if is_cli:
-        #AssertError(NotImplementedError, codecs.unicode_escape_encode, "abc")
-        AssertError(NotImplementedError, codecs.unicode_escape_encode)
+        AssertError(NotImplementedError, codecs.unicode_escape_encode, "abc")
 
 def test_utf_16_encode():
     #Sanity
@@ -479,9 +472,9 @@ def test_file_encodings():
     names.
     '''
     
-    sys.path.append(nt.getcwd() + "\\tmp_encodings")
+    sys.path.append(path_combine(os.getcwd(), "tmp_encodings"))
     try:
-        nt.mkdir(nt.getcwd() + "\\tmp_encodings")
+        os.mkdir(path_combine(os.getcwd(), "tmp_encodings"))
     except:
         pass
     
@@ -492,23 +485,25 @@ def test_file_encodings():
                 print "http://ironpython.codeplex.com/WorkItem/View.aspx?WorkItemId=24082"
                 continue
             temp_mod_name = "test_encoding_" + coding.replace("-", "_").replace(" ", "_")
-            f = open(nt.getcwd() + "\\tmp_encodings\\" + temp_mod_name + ".py",
+            f = open(path_combine(os.getcwd(), "tmp_encodings", temp_mod_name + ".py"),
                     "w")
             f.write("# coding: %s" % (coding))
             f.close()
             if temp_mod_name not in ["test_encoding_uTf!!!8"]: #http://ironpython.codeplex.com/WorkItem/View.aspx?WorkItemId=20302
                 __import__(temp_mod_name)
-            nt.remove(nt.getcwd() + "\\tmp_encodings\\" + temp_mod_name + ".py")
+            os.remove(path_combine(os.getcwd(), "tmp_encodings", temp_mod_name + ".py"))
             
     finally:
         #cleanup
-        sys.path.remove(nt.getcwd() + "\\tmp_encodings")
+        sys.path.remove(path_combine(os.getcwd(), "tmp_encodings"))
+        os.rmdir(path_combine(os.getcwd(), "tmp_encodings"))
 
 @skip("silverlight")
+@skip("netstandard") # sys.executable isn't an executable
 def test_cp11334():
     
     #--Test that not using "# coding ..." results in a warning
-    t_in, t_out, t_err = nt.popen3(sys.executable + " " + nt.getcwd() + r"\encoded_files\cp11334_warn.py")
+    t_in, t_out, t_err = os.popen3(sys.executable + " " + path_combine(os.getcwd(), "encoded_files", "cp11334_warn.py"))
     t_err_lines = t_err.readlines()
     t_out_lines = t_out.readlines()
     t_err.close()
@@ -520,7 +515,7 @@ def test_cp11334():
     Assert(t_err_lines[1].startswith("SyntaxError: Non-ASCII character '\\xb5' in file"))
     
     #--Test that using "# coding ..." is OK
-    t_in, t_out, t_err = nt.popen3(sys.executable + " " + nt.getcwd() + r"\encoded_files\cp11334_ok.py")
+    t_in, t_out, t_err = os.popen3(sys.executable + " " + path_combine(os.getcwd(), "encoded_files", "cp11334_ok.py"))
     t_err_lines = t_err.readlines()
     t_out_lines = t_out.readlines()
     t_err.close()
@@ -545,22 +540,23 @@ def test_file_encodings_negative():
     - need variations on the encoding names
     '''
     import sys
-    import nt
-    sys.path.append(nt.getcwd() + "\\tmp_encodings")
+    sys.path.append(path_combine(os.getcwd(), "tmp_encodings"))
     try:
-        nt.mkdir(nt.getcwd() + "\\tmp_encodings")
+        os.mkdir(path_combine(os.getcwd(), "tmp_encodings"))
     except:
         pass
              
     try:
         #negative case
-        f = open(nt.getcwd() + "\\tmp_encodings\\" + "bad_encoding.py", "w")
+        f = open(path_combine(os.getcwd(), "tmp_encodings", "bad_encoding.py"), "w")
         f.write("# coding: bad")
         f.close()
         AssertError(SyntaxError, __import__, "bad_encoding")
+        os.remove(path_combine(os.getcwd(), "tmp_encodings", "bad_encoding.py"))
     finally:
         #cleanup
-        sys.path.remove(nt.getcwd() + "\\tmp_encodings")
+        sys.path.remove(path_combine(os.getcwd(), "tmp_encodings"))
+        os.rmdir(path_combine(os.getcwd(), "tmp_encodings"))
 
 @disabled
 def test_cp1214():
@@ -605,7 +601,7 @@ def test_lookup_encodings():
 @skip("silverlight cli") #http://ironpython.codeplex.com/WorkItem/View.aspx?WorkItemId=1019
 def test_cp1019():
     #--Test that bogus encodings fail properly
-    t_in, t_out, t_err = nt.popen3(sys.executable + " " + nt.getcwd() + r"\encoded_files\cp1019.py")
+    t_in, t_out, t_err = os.popen3(sys.executable + " " + path_combine(os.getcwd(), "encoded_files", "cp1019.py"))
     t_err_lines = t_err.readlines()
     t_out_lines = t_out.readlines()
     t_err.close()

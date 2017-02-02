@@ -20,6 +20,7 @@ using System.Linq.Expressions;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using Microsoft.Scripting.Ast;
@@ -45,7 +46,9 @@ namespace IronPython.Runtime {
             : this(context, @object, offset, -1) {
         }
 
+        [Python3Warning("buffer() not supported in 3.x")]
         public PythonBuffer(CodeContext/*!*/ context, object @object, int offset, int size) {
+            PythonOps.Warn3k(context, "buffer() not supported in 3.x");
             if (!InitBufferObject(@object, offset, size)) {
                 throw PythonOps.TypeError("expected buffer object");
             }
@@ -78,7 +81,7 @@ namespace IronPython.Runtime {
                 Array arr = o as Array;
                 if (arr != null) {
                     Type t = arr.GetType().GetElementType();
-                    if (!t.IsPrimitive && t != typeof(string)) {
+                    if (!t.GetTypeInfo().IsPrimitive && t != typeof(string)) {
                         return false;
                     }
                     length = arr.Length;

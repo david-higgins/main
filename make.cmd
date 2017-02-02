@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set PATH=%PATH%;%WINDIR%\Microsoft.NET\Framework\v4.0.30319;%WINDIR%\Microsoft.NET\Framework\v3.5
+set PATH=%PATH%;%ProgramFiles(x86)%\MSBuild\14.0\Bin\;%WINDIR%\Microsoft.NET\Framework\v4.0.30319;%WINDIR%\Microsoft.NET\Framework\v3.5
 
 :getopts
 if "%1"=="" (goto :default) else (goto :%1)
@@ -57,7 +57,15 @@ echo No target 'package'. Try 'package-release'.
 goto :exit
 
 :test
-Test\test-ipy-tc.cmd /category:Languages\IronPython\IronPython\2.X
+Test\test-ipy-tc.cmd /category:Languages\IronPython\2.X
+goto :exit
+
+:testall
+Test\test-ipy-tc.cmd /all /runlong
+goto :exit
+
+:testalldisabled
+Test\test-ipy-tc.cmd /all /runlong /rundisabled
 goto :exit
 
 :distclean
@@ -68,6 +76,13 @@ goto :main
 :main
 msbuild /t:%_target% /p:BaseConfiguration=%_flavour% /verbosity:minimal /nologo
 goto :exit
+
+:core
+dotnet restore
+set _flavour=Release
+dotnet build -c %_flavour% -o bin\netcoreapp1.0%_flavour%  -f netcoreapp1.0 .\Languages\IronPython\IronPythonConsole
+msbuild Test\ClrAssembly\ClrAssembly.csproj /p:Configuration=%_flavour%
+copy bin\%_flavour%\rowantest* bin\netcoreapp1.0%_flavour%
 
 :exit
 endlocal

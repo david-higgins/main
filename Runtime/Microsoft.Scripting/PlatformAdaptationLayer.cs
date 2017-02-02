@@ -29,6 +29,10 @@ using Microsoft.Scripting.Utils;
 using System.Runtime.CompilerServices;
 using System.Collections;
 
+#if NETCOREAPP1_0
+using Environment = System.FakeEnvironment;
+#endif
+
 namespace Microsoft.Scripting {
 
 #if !FEATURE_PROCESS
@@ -54,7 +58,7 @@ namespace Microsoft.Scripting {
         public static readonly PlatformAdaptationLayer Default = new PlatformAdaptationLayer();
 
         public static readonly bool IsCompactFramework =
-#if WIN8
+#if WIN8 || NETSTANDARD
             false;
 #else
             Environment.OSVersion.Platform == PlatformID.WinCE ||
@@ -138,7 +142,7 @@ namespace Microsoft.Scripting {
 #if WIN8
             throw new NotImplementedException();
 #elif !SILVERLIGHT
-            return Assembly.Load(name);
+            return Assembly.Load(new AssemblyName(name));
 #else
             return Assembly.Load(LookupFullName(name));
 #endif
@@ -147,7 +151,11 @@ namespace Microsoft.Scripting {
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Reliability", "CA2001:AvoidCallingProblematicMethods", MessageId = "System.Reflection.Assembly.LoadFile")]
         public virtual Assembly LoadAssemblyFromPath(string path) {
 #if FEATURE_FILESYSTEM
+#if NETSTANDARD
+            return System.Runtime.Loader.AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
+#else
             return Assembly.LoadFile(path);
+#endif
 #else
             throw new NotImplementedException();
 #endif
@@ -385,6 +393,7 @@ namespace Microsoft.Scripting {
 #endif
         }
 
+#if !NETSTANDARD
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2201:DoNotRaiseReservedExceptionTypes")]
         public virtual void SetEnvironmentVariable(string key, string value) {
 #if FEATURE_PROCESS
@@ -412,6 +421,7 @@ namespace Microsoft.Scripting {
                 throw new ExternalException("SetEnvironmentVariable failed", Marshal.GetLastWin32Error());
             }
         }
+#endif
 #endif
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1024:UsePropertiesWhereAppropriate")]

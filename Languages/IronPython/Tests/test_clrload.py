@@ -43,22 +43,33 @@ def test_negative_assembly_names():
         clr.AddReferenceToFile,
         clr.AddReferenceToFileAndPath,
         clr.AddReferenceByName,
-        clr.AddReferenceByPartialName,
         clr.LoadAssemblyFromFileWithPath,
         clr.LoadAssemblyFromFile,
         clr.LoadAssemblyByName,
-        clr.LoadAssemblyByPartialName,
         ]:
         AssertError(TypeError, method, None)
+
+    if not is_netstandard:
+        for method in [
+                clr.AddReferenceByPartialName,
+                clr.LoadAssemblyByPartialName,
+            ]:
+            AssertError(TypeError, method, None)
 
     for method in [
         clr.AddReference,
         clr.AddReferenceToFile,
         clr.AddReferenceToFileAndPath,
         clr.AddReferenceByName,
-        clr.AddReferenceByPartialName,
         ]:
         AssertError(TypeError, method, None, None)
+
+    if not is_netstandard:
+        for method in [
+            clr.AddReferenceByPartialName,
+            ]:
+            AssertError(TypeError, method, None, None)
+
     import System
     AssertError(ValueError, clr.LoadAssemblyFromFile, System.IO.Path.DirectorySeparatorChar)
     AssertError(ValueError, clr.LoadAssemblyFromFile, '')
@@ -83,9 +94,14 @@ def test_references():
 
 def test_gac():
     import System
+    if is_netstandard:
+        clr.AddReference("System.Diagnostics.Process")
     def get_gac():
             process = System.Diagnostics.Process()
-            process.StartInfo.FileName = System.IO.Path.Combine(System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory(), "gacutil.exe")
+            if is_posix:
+				process.StartInfo.FileName = "/usr/bin/gacutil"
+            else:
+                process.StartInfo.FileName = System.IO.Path.Combine(System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory(), "gacutil.exe")
             process.StartInfo.Arguments = "/nologo /l"
             process.StartInfo.CreateNoWindow = True
             process.StartInfo.UseShellExecute = False
@@ -119,6 +135,7 @@ def test_nonamespaceloadtest():
     AreEqual(a.HelloWorld(), 'Hello World')
 
 @skip("multiple_execute")
+@skip("netstandard") # code doesn't compile in netstandard?
 def test_addreferencetofileandpath_conflict():
     """verify AddReferenceToFileAndPath picks up the path specified, not some arbitrary assembly somewhere in your path already"""
     code1 = """
@@ -159,6 +176,7 @@ public class CollisionTest {
 #####################
 # VERIFY clr.AddReferenceToFile behavior...
 @skip("multiple_execute")
+@skip("netstandard") # code doesn't compile in netstandard?
 def test_addreferencetofile_verification():
     tmp = testpath.temporary_dir
     sys.path.append(tmp)
@@ -221,6 +239,7 @@ public class test2{
     filecopy(test1_dll, test1_dll_along_with_ipy)
 
 @skip("multiple_execute")
+@skip("netstandard") # code doesn't compile in netstandard?
 def test_assembly_resolve_isolation():
     # CodePlex issue 23506. This feature only works with .NET 4.0
     # builds of IronPython
@@ -228,8 +247,8 @@ def test_assembly_resolve_isolation():
         return
     
     import os
-    clr.AddReference("IronPython.dll")
-    clr.AddReference("Microsoft.Scripting.dll")
+    clr.AddReference("IronPython")
+    clr.AddReference("Microsoft.Scripting")
     from IronPython.Hosting import Python
     from Microsoft.Scripting import SourceCodeKind
     tmp = testpath.temporary_dir
@@ -237,9 +256,9 @@ def test_assembly_resolve_isolation():
     tmp2 = path_combine(tmp, 'resolve2')
 
     if not os.path.exists(tmp1):
-        nt.mkdir(tmp1)
+        os.mkdir(tmp1)
     if not os.path.exists(tmp2):
-        nt.mkdir(tmp2)
+        os.mkdir(tmp2)
     
     code1a = """
 using System;
@@ -334,27 +353,31 @@ def test_addreference_sanity():
     # add reference directly to assembly
     clr.AddReference(''.GetType().Assembly)
     # add reference via partial name
-    clr.AddReference('System.Xml')
+    if is_netstandard:
+        clr.AddReference('System.Xml.XmlDocument')
+    else:
+        clr.AddReference('System.Xml')
 
     # add a reference via a fully qualified name
     clr.AddReference(''.GetType().Assembly.FullName)
 
 def get_local_filename(base):
-    if __file__.count('\\'):
-        return __file__.rsplit("\\", 1)[0] + '\\'+ base
+    if __file__.count(os.sep):
+        return path_combine(__file__.rsplit(os.sep, 1)[0], base)
     else:
         return base
 
 def compileAndLoad(name, filename, *args):
     import clr
     sys.path.append(sys.exec_prefix)
-    AreEqual(run_csc("/nologo /t:library " + ' '.join(args) + " /out:\"" + sys.exec_prefix + "\"\\" + name +".dll \"" + filename + "\""), 0)
+    AreEqual(run_csc("/nologo /t:library " + ' '.join(args) + " /out:\"" + path_combine(sys.exec_prefix, name +".dll") + "\" \"" + filename + "\""), 0)
     return clr.LoadAssemblyFromFile(name)
 
 @skip("multiple_execute")
+@skip("netstandard") # code doesn't compile in netstandard?
 def test_classname_same_as_ns():
     sys.path.append(sys.exec_prefix)
-    AreEqual(run_csc("/nologo /t:library /out:\"" + sys.exec_prefix + "\"\\c4.dll \"" + get_local_filename('c4.cs') + "\""), 0)
+    AreEqual(run_csc("/nologo /t:library /out:\"" + path_combine(sys.exec_prefix, "c4.dll") + "\" \"" + get_local_filename('c4.cs') + "\""), 0)
     clr.AddReference("c4")
     import c4
     Assert(not c4 is c4.c4)
@@ -388,11 +411,12 @@ def test_local_dll():
     AssertError(AttributeError, f)
 
 @skip("multiple_execute")
+@skip("netstandard") # code doesn't compile in netstandard?
 def test_namespaceimport():
     tmp = testpath.temporary_dir
     if tmp not in sys.path:
         sys.path.append(tmp)
-
+        
     code1 = "namespace TestNamespace { public class Test1 {} }"
     code2 = "namespace TestNamespace { public class Test2 {} }"
 
@@ -416,11 +440,13 @@ def test_no_names_provided():
     AssertError(TypeError, clr.AddReference, None)
     AssertError(TypeError, clr.AddReferenceToFile, None)
     AssertError(TypeError, clr.AddReferenceByName, None)
-    AssertError(TypeError, clr.AddReferenceByPartialName, None)
+    if not is_netstandard:
+        AssertError(TypeError, clr.AddReferenceByPartialName, None)
     AssertError(ValueError, clr.AddReference)
     AssertError(ValueError, clr.AddReferenceToFile)
     AssertError(ValueError, clr.AddReferenceByName)
-    AssertError(ValueError, clr.AddReferenceByPartialName)
+    if not is_netstandard:
+        AssertError(ValueError, clr.AddReferenceByPartialName)
 
 @skip("multiple_execute")
 def test_load_count():
@@ -429,7 +455,10 @@ def test_load_count():
     # need to be updated
     import clr, System
     before = repr(System)
-    clr.AddReference('System.Drawing')
+    if is_netstandard:
+        clr.AddReference('System.Drawing.Primitives')
+    else:
+        clr.AddReference('System.Drawing')
     after = repr(System)
 
     # Strip common substring from start and end

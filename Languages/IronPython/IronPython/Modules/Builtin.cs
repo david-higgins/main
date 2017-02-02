@@ -166,14 +166,17 @@ namespace IronPython.Modules {
         }
 
         [Documentation("apply(object[, args[, kwargs]]) -> value\n\nDeprecated.\nInstead, use:\n    function(*args, **keywords).")]
+        [Python3Warning("apply() not supported in 3.x; use func(*args, **kwargs)")]
         public static object apply(CodeContext/*!*/ context, object func) {
             return PythonOps.CallWithContext(context, func);
         }
 
+        [Python3Warning("apply() not supported in 3.x; use func(*args, **kwargs)")]
         public static object apply(CodeContext/*!*/ context, object func, object args) {
             return PythonOps.CallWithArgsTupleAndContext(context, func, ArrayUtils.EmptyObjects, args);
         }
 
+        [Python3Warning("apply() not supported in 3.x; use func(*args, **kwargs)")]
         public static object apply(CodeContext/*!*/ context, object func, object args, object kws) {
             return context.LanguageContext.CallWithKeywords(func, args, kws);
         }
@@ -190,21 +193,20 @@ namespace IronPython.Modules {
                 return DynamicHelpers.GetPythonTypeFromType(typeof(_basestring));
             }
         }
+        
+        public static string bin(object obj) {
+            if (obj is int) return Int32Ops.ToBinary((int)obj);
+            if (obj is Index) return Int32Ops.ToBinary(Converter.ConvertToIndex((Index)obj));
+            if (obj is BigInteger) return BigIntegerOps.ToBinary((BigInteger)obj);
 
-        public static string bin(int number) {
-            return Int32Ops.ToBinary(number);
-        }
+            object res = PythonOps.Index(obj);
+            if (res is int) {
+                return Int32Ops.ToBinary((int)res);
+            } else if (res is BigInteger) {
+                return BigIntegerOps.ToBinary((BigInteger)res);
+            }
 
-        public static string bin(Index number) {
-            return Int32Ops.ToBinary(Converter.ConvertToIndex(number));
-        }
-
-        public static string bin(BigInteger number) {
-            return BigIntegerOps.ToBinary(number);
-        }
-
-        public static string bin(double number) {
-            throw PythonOps.TypeError("'float' object cannot be interpreted as an index");
+            throw PythonOps.TypeError("__index__ returned non-(int, long) (type {0})", PythonOps.GetPythonTypeName(res));
         }
 
         public static PythonType @bool {
@@ -233,7 +235,6 @@ namespace IronPython.Modules {
         }
 
         [Documentation("callable(object) -> bool\n\nReturn whether the object is callable (i.e., some kind of function).")]
-        [Python3Warning("callable() is removed in 3.x. instead call hasattr(obj, '__call__')")]
         public static bool callable(CodeContext/*!*/ context, object o) {
             return PythonOps.IsCallable(context, o);
         }
@@ -261,6 +262,7 @@ namespace IronPython.Modules {
         }
 
         [Documentation("coerce(x, y) -> (x1, y1)\n\nReturn a tuple consisting of the two numeric arguments converted to\na common type. If coercion is not possible, raise TypeError.")]
+        [Python3Warning("coerce() not supported in 3.x")]
         public static object coerce(CodeContext/*!*/ context, object x, object y) {
             object converted;
 
@@ -319,7 +321,7 @@ namespace IronPython.Modules {
                 text = ((Bytes)source).ToString();
             else 
                 // cpython accepts either AST or readable buffer object
-                throw PythonOps.TypeError("srouce can be either AST or string, actual argument: {0}", source.GetType());
+                throw PythonOps.TypeError("source can be either AST or string, actual argument: {0}", source.GetType());
             
             if (text.IndexOf('\0') != -1) {
                 throw PythonOps.TypeError("compile() expected string without null bytes");
@@ -531,14 +533,17 @@ namespace IronPython.Modules {
             return code.Call(scope);
         }
 
+        [Python3Warning("execfile() not supported in 3.x; use exec()")]
         public static void execfile(CodeContext/*!*/ context, object/*!*/ filename) {
             execfile(context, filename, null, null);
         }
 
+        [Python3Warning("execfile() not supported in 3.x; use exec()")]
         public static void execfile(CodeContext/*!*/ context, object/*!*/ filename, object globals) {
             execfile(context, filename, globals, null);
         }
 
+        [Python3Warning("execfile() not supported in 3.x; use exec()")]
         public static void execfile(CodeContext/*!*/ context, object/*!*/ filename, object globals, object locals) {
             if (filename == null) {
                 throw PythonOps.TypeError("execfile() argument 1 must be string, not None");
@@ -965,6 +970,7 @@ namespace IronPython.Modules {
             }
         }
 
+#if !NETSTANDARD
         public static string intern(object o) {
             string s = o as string;
             if (s == null) {
@@ -972,6 +978,7 @@ namespace IronPython.Modules {
             }
             return string.Intern(s);
         }
+#endif
 
         public static bool isinstance(object o, [NotNull]PythonType typeinfo) {
             return PythonOps.IsInstance(o, typeinfo);
@@ -1151,6 +1158,8 @@ namespace IronPython.Modules {
 
             if (func != null) {
                 mapSite = MakeMapSite<object, object>(context);
+            } else {
+                PythonOps.Warn3k(context, "map(None, ...) not supported in 3.x; use list(...)");
             }
 
             while (en.MoveNext()) {
@@ -1578,6 +1587,14 @@ namespace IronPython.Modules {
             return res;            
         }
 
+        public static PythonFile open(CodeContext context, string name, [DefaultParameterValue("r")]string mode, BigInteger buffering) {
+            return open(context, name, mode, (int)buffering);
+        }
+
+        public static PythonFile open(CodeContext context, string name, [DefaultParameterValue("r")]string mode, double buffering) {
+            throw PythonOps.TypeError("integer argument expected, got float");
+        }
+
         /// <summary>
         /// Creates a new Python file object from a .NET stream object.
         /// 
@@ -1642,7 +1659,7 @@ namespace IronPython.Modules {
             }
 
             object end = AttrCollectionPop(kwargs, "end", "\n");
-            if (sep != null && !(sep is string)) {
+            if (end != null && !(end is string)) {
                 throw PythonOps.TypeError("end must be None or str, not {0}", PythonTypeOps.GetName(end));
             }
 
@@ -1968,6 +1985,7 @@ namespace IronPython.Modules {
             return line;
         }
 
+        [Python3Warning("reduce() not supported in 3.x; use functools.reduce()")]
         public static object reduce(CodeContext/*!*/ context, SiteLocalStorage<CallSite<Func<CallSite, CodeContext, object, object, object, object>>> siteData, object func, object seq) {
             IEnumerator i = PythonOps.GetEnumerator(seq);
             if (!i.MoveNext()) {
@@ -1984,6 +2002,7 @@ namespace IronPython.Modules {
             return ret;
         }
 
+        [Python3Warning("reduce() not supported in 3.x; use functools.reduce()")]
         public static object reduce(CodeContext/*!*/ context, SiteLocalStorage<CallSite<Func<CallSite, CodeContext, object, object, object, object>>> siteData, object func, object seq, object initializer) {
             IEnumerator i = PythonOps.GetEnumerator(seq);
             EnsureReduceData(context, siteData);
@@ -2011,6 +2030,7 @@ namespace IronPython.Modules {
         [ThreadStatic]
         private static List<PythonModule> _reloadStack;
 
+        [Python3Warning("In 3.x, reload() is renamed to imp.reload()")]
         public static object reload(CodeContext/*!*/ context, PythonModule/*!*/ module) {
             if (module == null) {
                 throw PythonOps.TypeError("unexpected type: NoneType");

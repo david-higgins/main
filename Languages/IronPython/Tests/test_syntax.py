@@ -222,10 +222,10 @@ compile_tests = [
      """    except IndexError:\n"""
      """        pass\n"""
      """    finally:\n"""
-     """        continue\n""", "'continue' not supported inside 'finally' clause", 7, False)
+     """        continue\n""", "'continue' not supported inside 'finally' clause", 7, False),
 
     #CodePlex 15428
-    #("'abc'.", "invalid syntax", 1),
+    #("'abc'.", "invalid syntax", 1, False),
 ]
 
 compile_tests.append(("None = 2", "cannot assign to None", 1, False))
@@ -709,7 +709,7 @@ def test_parser_recovery():
         def __init__(self, text):
             self.text = text
         def GetReader(self):
-            return SourceCodeReader(StringReader(self.text), Encoding.Default)
+            return SourceCodeReader(StringReader(self.text), Encoding.GetEncoding(0))
 
     def parse_text(text):
         errorSink = MyErrorSink()

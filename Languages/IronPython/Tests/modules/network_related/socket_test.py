@@ -364,9 +364,9 @@ def test_gethostbyname_ex():
     '''
     #sanity
     joe = socket.gethostbyname_ex("localhost")[2]
-    Assert(joe.count("127.0.0.1")==1)
+    Assert("127.0.0.1" in joe)
     joe = socket.gethostbyname_ex("127.0.0.1")[2]
-    Assert(joe.count("127.0.0.1")==1)
+    Assert("127.0.0.1" in joe)
     
     #negative
     AssertError(socket.gaierror, socket.gethostbyname_ex, "should never work")
@@ -486,7 +486,7 @@ def test_cp5814():
     global EXIT_CODE
     HAS_EXITED = False
     
-    import nt
+    import os
     import thread
     import time
     
@@ -522,14 +522,14 @@ finally:
     def server_thread():
         global EXIT_CODE
         global HAS_EXITED
-        import nt
+        import os
         serverFile = path_combine(testpath.temporary_dir, "cp5814server.py")
         write_to_file(serverFile, server)
-        EXIT_CODE = nt.system("%s %s" %
+        EXIT_CODE = os.system("%s %s" %
                     (sys.executable, serverFile))
         HAS_EXITED = True
         try:
-            nt.remove(serverFile)
+            os.remove(serverFile)
         except:
             pass
     
@@ -569,7 +569,7 @@ def test_cp7451():
     global EXIT_CODE
     HAS_EXITED = False
     
-    import nt
+    import os
     import thread
     import time
     
@@ -605,14 +605,14 @@ finally:
     def server_thread():
         global EXIT_CODE
         global HAS_EXITED
-        import nt
+        import os
         serverFile = path_combine(testpath.temporary_dir, "cp7451server.py")
         write_to_file(serverFile, server)
-        EXIT_CODE = nt.system("%s %s" %
+        EXIT_CODE = os.system("%s %s" %
                     (sys.executable, serverFile))
         HAS_EXITED = True
         try:
-            nt.remove(serverFile)
+            os.remove(serverFile)
         except:
             pass
     

@@ -169,11 +169,12 @@ namespace IronPython.Runtime.Operations {
 
             // radix 16/8/2 allows a 0x/0o/0b preceding it... We either need a whole new
             // integer parser, or special case it here.
+            int start = 0;
             if (@base == 16 || @base == 8 || @base == 2) {
-                s = TrimRadix(s, @base);
+                start = s.Length - TrimRadix(s, @base).Length;
             }
 
-            return LiteralParser.ParseIntegerSign(s, @base);
+            return LiteralParser.ParseIntegerSign(s, @base, start);
         }
 
         [StaticExtensionMethod]
@@ -406,10 +407,6 @@ namespace IronPython.Runtime.Operations {
             return self;
         }
 
-        public static int __index__(int self) {
-            return self;
-        }
-
         public static BigInteger __long__(int self) {
             return (BigInteger)self;
         }
@@ -561,10 +558,6 @@ namespace IronPython.Runtime.Operations {
             }
 
             return spec.AlignNumericText(digits, self == 0, self > 0);
-        }
-
-        public static string/*!*/ __repr__(int self) {
-            return self.ToString(CultureInfo.InvariantCulture);
         }
 
         private static string ToHex(int self, bool lowercase) {
